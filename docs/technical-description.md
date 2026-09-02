@@ -72,7 +72,10 @@ and spring force record.
 `dist/src/` and rewrites the static page paths. `dist/` is generated and not
 source-controlled. Browser source is excluded from headless coverage because
 it is platform glue; the required evidence for it is a successful static build
-and, at Phase 3 exit, browser smoke tests.
+and, at Phase 3 exit, Playwright browser smoke tests. The planned configuration
+starts the built static artifact with Playwright's local `webServer`, drives
+role-addressable controls, and retains trace/screenshot artifacts on failures;
+see [browser-testing.md](browser-testing.md).
 
 ## Verification contract
 

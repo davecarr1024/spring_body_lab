@@ -40,6 +40,8 @@ proof that the layers compose correctly; fixed geometry contact is next.
 - [Design and roadmap](docs/design.md) is the canonical design and phased
   path to the soft-body game.
 - [Roadmap](docs/roadmap.md) records current vertical-slice gates.
+- [Browser testing plan](docs/browser-testing.md) defines the Playwright
+  evidence required to complete the browser slice.
 - [Design review](docs/design-review.md) evaluates the active architecture
   against the cross-repository project standards.
 - [Agent guide](AGENTS.md) gives commands and contribution constraints.

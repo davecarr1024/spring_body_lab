@@ -30,9 +30,10 @@ and replay artifacts rather than more scene features.
 **Deliverable:** a browser scene whose Step/Play/Kick controls issue game
 commands to the physics library and display returned evidence.
 
-**Evidence:** a built static artifact plus browser smoke tests showing that
+**Evidence:** a built static artifact plus Playwright smoke tests showing that
 each control changes the public game/physics state, never browser-owned state.
-The minimal scene exists; automation is the exit evidence still missing.
+The minimal scene exists; implement the focused
+[browser-testing plan](browser-testing.md) as its remaining exit evidence.
 
 ## Phase 4 — Fixed geometry contact
 

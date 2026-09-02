@@ -238,8 +238,9 @@ and `game`. Coverage is only the floor. Tests must prove each layer's contracts:
 - contact tolerance, visible normal/correction, topology exclusions, and
   deterministic generation;
 - game commands yielding the expected replayable physics events;
-- browser controls and overlays displaying existing evidence rather than
-  performing private analysis.
+- Playwright browser controls and overlays displaying existing evidence rather
+  than performing private analysis; see
+  [browser-testing.md](browser-testing.md).
 
 Use named, small scenario regressions: one spring, dropped body, hanging
 sheet, colliding blocks, and weak wall. Compare selected states, events, and

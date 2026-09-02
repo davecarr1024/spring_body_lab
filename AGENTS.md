@@ -23,7 +23,8 @@ npm run check
 ```
 
 `npm run check` is the presubmit command. It produces the Node test-coverage
-report and builds the browser artifact.
+report and builds the browser artifact. Once Phase 3 installs Playwright,
+`npm run check` must also run its static-artifact browser smoke suite.
 
 ## Architecture
 
@@ -54,9 +55,9 @@ report and builds the browser artifact.
 
 Treat tests as the proof of the model. Keep production math, physics, and game
 coverage at 100% line/function where the Node coverage runner can measure it;
-browser rendering is a thin interactive adapter and is verified by the static
-build until browser smoke
-tests are introduced. Update the README plus every affected document under
+browser rendering is a thin interactive adapter and is currently verified by
+the static build. Complete [`docs/browser-testing.md`](docs/browser-testing.md)
+before treating Phase 3 as complete. Update the README plus every affected document under
 `docs/` whenever model behavior, evidence, commands, or phase state changes.
 
 Use the developer guide at `/home/davecarr1024/projects/davecarr1024` as the
