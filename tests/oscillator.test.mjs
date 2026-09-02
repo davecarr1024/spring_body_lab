@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   energy,
+  exactGravity,
   exactUndamped,
   run,
   stepEuler,
@@ -41,4 +42,18 @@ test("velocity Verlet keeps an undamped oscillator's energy bounded", () => {
   let state = initial;
   for (let step = 0; step < 1000; step += 1) state = stepVelocityVerlet(state, parameters, .1);
   assert.ok(Math.abs(energy(state, parameters) - energy(initial, parameters)) < .03);
+});
+
+test("the gravity reference follows the constant-acceleration equation", () => {
+  const state = exactGravity(2, { x: 10, v: 3 }, { gravity: -9.81 });
+  assert.ok(Math.abs(state.x + 3.62) < 1e-12);
+  assert.ok(Math.abs(state.v + 16.62) < 1e-12);
+});
+
+test("RK4 tracks a free-fall reference through the same derivative contract", () => {
+  const falling = { mass: 2, stiffness: 0, damping: 0, gravity: -9.81 };
+  const initialFall = { x: 10, v: 3 };
+  const actual = run({ initial: initialFall, parameters: falling, dt: .1, duration: 2, solver: "RK4" }).at(-1).state;
+  const exact = exactGravity(2, initialFall, falling);
+  assert.ok(Math.hypot(actual.x - exact.x, actual.v - exact.v) < 1e-10);
 });
