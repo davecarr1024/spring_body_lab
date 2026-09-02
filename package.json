@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "test": "node --test tests/*.test.mjs",
-    "check": "npm test && npm run build"
+    "test": "node --test tests",
+    "coverage": "node --test --experimental-test-coverage tests",
+    "check": "npm run coverage && npm run build"
   }
 }

@@ -1,31 +1,51 @@
 # Spring Body Lab
 
-An interactive laboratory for learning how ordinary differential equations
-become simulated motion.
+Spring Body Lab is a deterministic soft-body game project built in layers: a
+tested 2D math/geometry library, a headless physics library, then a browser
+game that consumes them. It asks how small explicit rules can create deformable
+worlds that remain fun, inspectable, and explainable.
 
-The first world is one undamped mass on a spring. It compares explicit Euler,
-semi-implicit Euler, and RK4 against the analytic solution, and makes error
-and energy drift visible in the browser.
+The current vertical slice is a two-particle spring toy. Its browser controls
+issue deterministic game commands; the game delegates to physics; physics uses
+the public math layer and returns the forces and state the browser displays.
 
 ## Run locally
 
 ```bash
 npm test
+npm run coverage
 npm run build
+npm run check
 ```
 
 Open `dist/index.html` after building.
 
-## Current proof
+## What works now
 
-- exact quarter-cycle result for the harmonic oscillator;
-- RK4 accuracy against that analytic reference;
-- lower RK4 error with a smaller timestep;
-- intentional explicit-Euler energy growth compared with semi-implicit Euler.
+- immutable vector, scalar-tolerance, segment, AABB, closest-point, and
+  classified-intersection APIs;
+- validated immutable physics worlds with one fixed-step spring transition;
+- force evidence, pin handling, and command-driven impulses;
+- a headless game slice plus a browser view of its returned physics evidence.
 
-## Next
+This is not yet collision or a complete soft-body game. The current slice is a
+proof that the layers compose correctly; fixed geometry contact is next.
 
-Add a gravity scenario through the same model/solver boundary, then extract
-only the shared ODE and vector-math pieces that both scenarios honestly need.
+## Read deeper
 
-See [docs/design.md](docs/design.md) for the first-phase design.
+- [Current status](docs/status.md) is the capability tour, evidence, limits,
+  and next question.
+- [Technical description](docs/technical-description.md) maps the code,
+  public interfaces, data flow, and verification boundaries.
+- [Design and roadmap](docs/design.md) is the canonical design and phased
+  path to the soft-body game.
+- [Roadmap](docs/roadmap.md) records current vertical-slice gates.
+- [Design review](docs/design-review.md) evaluates the active architecture
+  against the cross-repository project standards.
+- [Agent guide](AGENTS.md) gives commands and contribution constraints.
+
+## Next small step
+
+Finish explicit trace/replay evidence for the physics step, then introduce one
+fixed geometry contact through the public math API. No new browser feature
+should precede that headless proof.

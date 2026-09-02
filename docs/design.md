@@ -1,297 +1,246 @@
-# Spring Body Lab design
+# Spring Body Lab Design
 
-## Purpose
+## Project thesis
 
-Spring Body Lab grows from an ODE laboratory into a small, interactive 2D
-deformable-body simulation. Its subject is the chain:
+Spring Body Lab is a browser-playable soft-body game developed from a small,
+deterministic physics library, itself built on a rigorously tested 2D math and
+geometry library. The project's question is:
+
+> Can a few clear physical and geometric rules produce deformable worlds that
+> are fun to play with and whose behavior remains possible to inspect, test,
+> and explain?
+
+The final game is not the reason to skip the foundations; it is the pressure
+that makes the foundations honest. Every layer must be useful on its own,
+present a deliberate public interface, and earn the next layer through a small
+vertical slice.
+
+"Spring Body Lab" is descriptive rather than product-polished: the spring body
+is the project's fundamental object, and the lab is the place where the engine
+and eventual game remain inspectable.
+
+## The current sketch is not the architecture
+
+The former scalar oscillator/free-fall browser was an exploration spike. It
+proved that deterministic traces, numerical comparison, and a visual inspector
+are worthwhile. It did **not** prescribe the public physics API, module layout,
+timestep contract, vector model, or game design, and has been replaced. Keep
+only the lessons that fit the new boundary: rendering cannot alter simulation
+state; deterministic runs are replayable; and model claims need executable
+evidence.
+
+## Product shape
+
+The eventual experience is a small 2D soft-body game: the player creates,
+grabs, drops, launches, compresses, and breaks soft structures in named scenes.
+Rope, sheet, block, and weak-wall bodies are the intended early toys. A breach
+or construction-sandbox game is a later capstone, not an excuse to introduce
+general engine features now.
+
+The first whole-project playable slice is deliberately tiny: step or kick a
+two-point spring body in a browser scene and inspect its returned state, spring
+force, and extension. That slice is built from the public physics library,
+which is built from the public math library; the browser contains no private
+simulation shortcut.
+
+## Layered libraries and dependency rule
 
 ```text
-state → derivative → integrator → forces → constraints → contact → fracture
+browser game / browser inspector
+              │ uses
+              ▼
+       soft-body physics library
+              │ uses
+              ▼
+       math and geometry library
 ```
 
-The eventual toy is a browser scene of point-mass-and-spring bodies that can be
-grabbed, dropped, compressed, launched, and broken. A late capstone is a
-sandbox with a weak wall and a ram, falling mass, or catapult-like launcher.
+Dependencies point down only. Each library is headless and has no DOM, canvas,
+ambient clock, random generator, scene file, or game dependency. The game is a
+consumer of completed physics evidence, not a second implementation of it.
 
-Every world has a deterministic headless model. The browser is a review and
-interaction adapter; it is never the authority for physics.
+| Layer | Public responsibility | Never owns |
+| --- | --- | --- |
+| `math` | immutable values, tolerance policy, 2D geometry, classified query results | particles, browser state, game rules |
+| `physics` | validated soft-body definitions, world state, fixed stepping, forces, constraints, contacts, traces | DOM events, rendering, level progression |
+| `game` | scenes, player commands, goals, display mapping, save/replay choices | vector arithmetic, private force/contact rules |
+| `browser` | input adaptation and rendering of game/physics evidence | mutation of physical state outside a physics command |
+
+The source tree should make this visible as those layers arrive:
+
+```text
+src/
+  math/       public, dependency-free math/geometry library
+  physics/    public, headless soft-body library depending on math
+  game/       deterministic scene/game model depending on physics
+  browser/    browser adapter depending on game and public library APIs
+tests/
+  math/ physics/ game/ browser/
+```
+
+Do not retain a flat `oscillator.mjs` as a compatibility center. It may survive
+as a numerical-example consumer of the future libraries, or be deleted.
+
+## Math and geometry library
+
+The math library is the first load-bearing vertical slice. Its first public
+types are immutable `Vec2`, `Segment2`, `Aabb2`, and explicit classified result
+values. Operations include vector arithmetic, dot/cross products, length and
+distance, normalization, projection, clamping, AABB operations, closest point
+on a segment, orientation, and segment intersection.
+
+There is one tolerance policy, owned by this library:
+
+- IDs and step numbers use exact comparisons; floating-point geometry does not.
+- Named absolute/relative tolerance helpers replace scattered epsilon literals.
+- Near-zero normalization and degenerate segments return explicit `degenerate`
+  outcomes or fail validation; they never create a hidden `NaN`.
+- Segment intersection distinguishes none, endpoint touch, proper crossing,
+  collinear overlap, and degeneracy. Results retain the witness point,
+  parameters, or overlap segment needed to inspect them.
+- Public inputs and outputs are finite, validated values. Invalid construction
+  returns context-rich structured diagnostics before physics can consume it.
+
+Geometry is not a convenience helper buried in contact code. It is a trusted,
+tested public boundary that makes future contacts explainable.
+
+## Physics library
+
+The physics library uses the math API rather than reimplementing it. It has
+three separate public concepts:
+
+```text
+WorldDefinition: immutable, validated structure and settings
+WorldState:      immutable evolving particle/spring state at a step index
+StepResult:      next state plus forces, contacts, corrections, events, diagnostics
+```
+
+`step(definition, state, commands) -> StepResult` is the authoritative state
+transition. It neither mutates caller-owned values nor consults browser state.
+Commands are immutable, step-indexed facts. The current public command is
+`applyImpulse`; `setGrabTarget` and `releaseGrab` are later
+contact/constraint work. The game may issue commands; it cannot write a
+particle's position or velocity directly.
+
+The first body is a graph of particles and springs. Current particle
+definitions carry a stable ID, position, velocity, and inverse mass; radius is
+introduced with the first contact phase. `inverseMass = 0` means pinned; any
+non-pinned inverse mass is finite and positive. Spring definitions name two
+distinct declared particle IDs, rest length, stiffness, and damping.
+Definitions reject duplicate IDs, unknown endpoints, non-finite numbers, and
+invalid bounds before a simulation step occurs.
+
+For an intact spring, with `d = pb - pa`, unit direction `n`, extension
+`|d| - restLength`, and axial speed `dot(vb - va, n)`, its endpoint force is:
+
+```text
+n * (stiffness * extension + damping * axialSpeed)
+```
+
+The opposite endpoint receives the exact negative. Zero-length/degenerate
+directions take an explicitly recorded safe path; the engine never invents a
+normal.
+
+The initial integration contract is one documented fixed timestep and
+semi-implicit Euler. It is a baseline chosen for a clear first proof, not a
+pluggable solver framework. Another integrator is admitted only when a named
+scene establishes a need and tests show its tradeoff.
+
+The fixed step has one inspectable order:
+
+```text
+validate commands → external forces → internal forces → integrate
+→ generate contacts → bounded constraint/contact solve → velocity repair
+→ damage/breakage → StepResult evidence
+```
+
+## Contacts, topology, and fracture
+
+Contacts build outward from the geometry library: particle/ground plane,
+particle/fixed segment, particle/particle across bodies, then a uniform-grid
+broad phase. Candidate generation, filtering, narrow-phase classification,
+and correction remain separate records in `StepResult`.
+
+Soft-body geometry and its spring graph are related but distinct. A generated
+sheet records particles, structural/diagonal springs, faces, and boundary
+edges. The generator has stable IDs, a recorded seed, and topology validation.
+It starts with rectangular/triangular grids only. Self-collision later excludes
+self, direct graph neighbors, and particles sharing a face/cell; each
+exclusion is inspectable.
+
+Fracture begins with a local strain threshold on a spring. Breakage emits an
+event and removes only that spring's future force. Component recomputation
+preserves IDs and history. Shear, bending, mesh splitting, 3D, and continuous
+collision are future hypotheses, not hidden requirements.
+
+## Game and browser boundary
+
+The game layer names scenes, recipes, objectives, and player-facing commands.
+It should have a deterministic headless scene state so a game action sequence
+can be replayed without a browser. The browser maps pointer input to game
+commands, advances/display-scrubs recorded results, and renders only facts
+already computed by the game and physics libraries.
+
+The browser inspector exposes particles, springs, faces, forces, contact
+normals, broad-phase cells, constraints, strain, events, energy caveats, and
+step timing. It is a debugging/game-explanation surface, not merely a demo.
+
+## Determinism and interfaces
+
+All definition order, IDs, commands, contact tie breaks, and generator seeds
+are explicit. A replay records a world recipe, engine settings, ordered
+commands, and the resulting step evidence. Any API that can fail uses a
+structured diagnostic/result type with the offending ID/value and operation;
+it does not silently repair invalid worlds.
+
+The desired interface quality is compositional: a reader can use `Vec2`
+without physics, use a physics probe without the game, and use a game scene
+without the browser. Each layer's types say which layer owns the fact.
 
 ## Scope boundaries
 
-- Start in 2D. 3D is an optional later branch after a trustworthy 2D breach
-  sandbox.
-- Do not build a generic engine, ECS, arbitrary concave collider, GPU solver,
-  or engineering-grade finite-element tool.
-- Springs are a legible approximation, not a claim that this models masonry or
-  rubber faithfully.
-- Do not conceal instability with tuning. Measure and display it.
-
-## Current foundation
-
-### Phase 0 — oscillator
-
-`{ x, v }` follows `dx/dt = v`, `dv/dt = -(k/m)x`. The browser compares Euler,
-semi-implicit Euler, midpoint/RK2, velocity Verlet, and RK4 with an analytic
-reference and visible error/energy drift.
-
-### Phase 1 — free fall
-
-Free fall follows the same solver boundary with `dv/dt = g` and its own exact
-solution. Spring and Free fall remain selectable worlds in one lab. This is the
-first proof that the integrators are not spring-specific.
-
-## Core contracts
-
-The first shared extraction stays small:
-
-```text
-Vec2       = { x, y }
-Particle   = { id, position, velocity, mass, inverseMass, force, radius }
-Integrator.step(derivative, state, dt) -> nextState
-Scenario.step(world, fixedDt) -> nextWorld
-Trace      = immutable fixed-step snapshots plus events
-```
-
-`inverseMass = 0` means pinned. Clear accumulated force once per fixed step.
-Use internally consistent metre/second/kilogram-like units. Render interpolation
-may smooth a trace, but may not introduce an independent timestep.
-
-## Soft-body representation
-
-A body has a physical graph and geometric skin. They are related, not identical.
-
-```text
-SoftBody
-  particles: Particle[]
-  springs: Spring[]
-  faces: Face[]
-  material: MaterialPreset
-  collision: CollisionPolicy
-  topology: BodyTopology
-```
-
-Particles are the only dynamically integrated elements. Faces are boundary
-edges and optional render triangles in 2D; in 3D they become triangle faces.
-Faces reference particle IDs, so they deform with the body. Springs define
-stiffness; faces define visible/collidable shape.
-
-```text
-Spring
-  a, b: ParticleId
-  restLength, stiffness, damping
-  tensionLimit, compressionLimit
-  state: intact | yielded | broken
-```
-
-Starter force is Hooke plus axial damping. For `direction = normalize(pb-pa)`,
-`extension = length(pb-pa)-restLength`, and relative axial speed `s`, apply
-`direction * (stiffness * extension + damping * s)` to one endpoint and its
-negative to the other. Broken bonds apply no force and emit `BondBroken`.
-
-A material preset is a named recipe, not a physical guarantee:
-
-```text
-particleMass/density
-edge, diagonal, bend stiffness and damping
-tensile, compressive, shear strength
-collisionRadius, restitution, friction
-```
-
-Useful early presets: rubbery sheet, stiff frame, rope/chain, weak wall.
-
-## Deterministic generation
-
-Generation records its recipe and seed so a satisfying collapse can be replayed.
-
-```text
-shape → sample points → connect spring graph → make faces/boundary
-      → assign material → validate topology → create SoftBody
-```
-
-Start with rectangle, disc, rope, and rectangular wall primitives. Point
-distribution parameters include grid spacing, density/mass, jitter seed, and
-pinned regions. Begin with square and triangular grids because they are easy to
-inspect.
-
-Spring patterns are named:
-
-- structural: horizontal/vertical neighbors;
-- triangulated: structural plus alternating diagonals;
-- cross-braced: both diagonals;
-- radial/ring: disc and rope experiments;
-- sparse wall: cell edges plus weak mortar-like cross-links.
-
-Derive two render triangles per grid cell and boundary edges from triangle edges
-used once. Keep face tessellation independent from diagonal spring choices.
-Reject duplicate springs, self-edges, unexpected disconnected graphs, and
-non-manifold boundaries.
-
-## Fixed-step simulation
-
-```text
-1. clear forces
-2. add gravity/drag
-3. add spring forces
-4. add mouse and joint forces
-5. integrate particles
-6. solve positional constraints and contacts for bounded iterations
-7. update corrected velocities where required
-8. evaluate yield/breakage and emit events
-9. record snapshot
-```
-
-Begin with semi-implicit Euler and velocity Verlet. Keep RK4 as a lesson, not
-the presumed contact solver: collision and fracture are discontinuous. Expose
-fixed timestep, substeps, and solver choice. Add substeps before experimenting
-with implicit Euler or position-based methods; show warnings when a recipe is
-outside a measured stable range.
-
-## Constraints and contact
-
-Collision is a constraint/contact phase, not a disguised spring force.
-
-### First constraints
-
-- pinned particle;
-- distance/anchor joint;
-- temporary mouse target constraint with capped force;
-- later: 2D hinge and driven-rest-length actuator.
-
-Scene commands create/remove constraints deterministically. The UI never writes
-particle positions directly.
-
-### Collision progression
-
-1. particle versus fixed ground plane: project penetration out, then apply
-   normal restitution and tangential friction;
-2. particle versus particle across different bodies;
-3. uniform-grid spatial hash broad phase;
-4. point versus boundary segment contact;
-5. opt-in self-collision.
-
-Contact corrections/impulses are equal and opposite. Begin with discrete contact
-and substeps; show tunnelling as a known limitation rather than pretending to
-support continuous collision detection.
-
-### Exclusions and self-collision
-
-Filter candidates using the topology graph before narrow phase: exclude self,
-direct spring neighbors, particles sharing a face/cell, and optionally particles
-within two graph hops. Keep distinct bodies eligible. This makes self-collision
-a graph-plus-geometry problem rather than a universal pairwise-force toggle.
-
-## Stress, fracture, and bodies after breakage
-
-The first failure model breaks a spring when normalized tension or compression
-crosses a limit, optionally after a small accumulated-damage window. Later add
-local shear from changing cell angle/diagonal relation and bending from adjacent
-face angle.
-
-This is sufficient to explore a wall: weak inter-cell links can let a ram open a
-hole; gravity then loads the unsupported region until it rotates, tears, and
-falls. That behavior must be earned through named regression scenes, not
-assumed from the lattice.
-
-After breakage, recompute connected components for selection/rendering and
-optionally split logical sub-bodies. Preserve particle IDs and event history.
-
-## Browser review lab
-
-The browser should be an illustrated instrument panel:
-
-- select named scene: hanging sheet, dropped block, rope, weak wall, ram;
-- create body from shape, generation pattern, material, and seed;
-- pause, single-step, reset, replay, and scrub traces;
-- expose gravity, solver, fixed dt, substeps, and material parameters;
-- independently overlay particles, springs, faces, collision radii, spatial
-  cells, contacts/normals, constraints, stress, and broken bonds;
-- display energy (with caveats for contact/friction), max penetration, max
-  strain, bond counts, constraint iterations, and event timeline.
-
-Click selection uses the same spatial query as simulation. Drag creates a
-temporary mouse constraint; release removes it. Shift-drag can later apply a
-displayed finite launch impulse. Record `grab`, `moveTarget`, `release`, and
-`launch` as step-indexed scene commands so an interactive failure is replayable
-headlessly.
-
-## Implementation phases and gates
-
-### Phase 2 — damping and shared ODE core
-
-Add damping/drag; extract only vector math, derivative contracts, integrators,
-and trace helpers used by both worlds.
-
-**Gate:** zero damping preserves existing tests; damping lowers energy; browser
-compares parameter values without scenario-specific solver code.
-
-### Phase 3 — 2D particle and ground
-
-Add `Vec2`, gravity, a fixed plane, and fixed stepping.
-
-**Gate:** dropped particle never remains below the plane after solve; bounce and
-rest are bounded; browser can step/reset and show contact.
-
-### Phase 4 — two particles and one spring
-
-Build a pinned/free/grabbed pair and expose extension, force, and energy.
-
-**Gate:** internal force is equal/opposite; rest length yields zero force; mouse
-uses a capped constraint, not direct mutation.
-
-### Phase 5 — generated sheets
-
-Implement deterministic shapes, point distributions, named spring patterns,
-render triangles, and topology validation.
-
-**Gate:** same recipe/seed reproduces IDs and geometry; a sheet hangs/sags and
-can be dragged in browser review.
-
-### Phase 6 — contacts and multiple bodies
-
-Add spatial hash, cross-body contacts, then opt-in self-collision exclusions.
-
-**Gate:** bodies separate without persistent deep overlap; adjacent particles
-do not explode; selected particle can show excluded/contact candidates.
-
-### Phase 7 — joints, stress, and fracture
-
-Add anchors, strain telemetry, break thresholds, event logs, components.
-
-**Gate:** deliberately weak bond breaks reproducibly with no NaNs; a named weak
-wall opens and drops an unsupported section.
-
-### Phase 8 — breach sandbox
-
-Package scenes around wall, ram, projectile, and launcher.
-
-**Gate:** user can create/reset/drag/launch, inspect failure cause, replay a
-seed/action trace, and share a compact scene recipe.
-
-### Phase 9 — optional 3D
-
-Keep 2D as reference/debugger. Add parallel `Vec3`, triangle collision faces,
-and one tessellated block only after Phase 8 is solid.
-
-## Test and browser strategy
-
-Unit-test vector math, integrators, force laws, generation, topology validation,
-spatial hashing, narrow phase, constraints, and fracture thresholds.
-
-Property/invariant tests use seeds to check finite state, equal/opposite internal
-forces, immobile pins, contact tolerance, zero force at rest length, deterministic
-trace/event replay, and no force from broken springs.
-
-Keep small scenario regressions: falling ball settles, hanging sheet remains in a
-range, rope breaks at chosen load, colliding blocks separate, and weak wall drops
-below a chosen height. Compare checkpoints/events, not giant frame dumps.
-
-Browser tests run a local static build where the browser can access it. Test
-scene selection, reset, stepping, controls, overlays, grab/release, replay, and
-visible metrics. They complement—not replace—headless physics tests. CI gates
-deployment on headless tests/build and browser smoke tests where supported.
-
-## Later sibling: fluid and shaders
-
-Fluid is a later sibling adventure: begin with grid dye/velocity, then explore
-shader advection and pressure projection. It shares numerical-stability and
-visible-explanation values, but earns its own model and test suite.
+- Start in 2D, with small finite scenes and deterministic fixed steps.
+- Do not build an ECS, plug-in solver system, generic collider, GPU solver,
+  arbitrary concave decomposition, or engineering-grade finite-element tool.
+- Do not hide instability with tuning; expose bounds, diagnostics, and known
+  limitations.
+- Do not make real-material claims for named spring recipes.
+- Do not begin game progression or rich controls before the same physics slice
+  exists headlessly and is proved.
+
+## Phased vertical slices
+
+The detailed gates are in [roadmap.md](roadmap.md). The sequence deliberately
+builds composition from simple conceptual pieces:
+
+1. a tested math/geometry library and diagnostic probe;
+2. a tested physics library with one spring and a textual trace;
+3. the first browser/game slice consuming that library;
+4. ground contact and a single-body scene;
+5. deterministic generated sheets;
+6. multiple bodies and self-collision;
+7. strain, fracture, and a weak wall;
+8. a soft-body game built from these completed pieces.
+
+A phase is complete only with its headless artifact, public interface tests,
+documentation, and a visible proof. No browser polish or generic abstraction
+may outrun a smaller lower-layer proof.
+
+## Testing standard
+
+The default goal is 100% coverage for production code in `math`, `physics`,
+and `game`. Coverage is only the floor. Tests must prove each layer's contracts:
+
+- math identities, tolerance boundaries, and geometry classifications;
+- definition validation and structured diagnostics;
+- equal-and-opposite spring forces, rest-length zero force, pin invariance,
+  finite state, and deterministic replay;
+- contact tolerance, visible normal/correction, topology exclusions, and
+  deterministic generation;
+- game commands yielding the expected replayable physics events;
+- browser controls and overlays displaying existing evidence rather than
+  performing private analysis.
+
+Use named, small scenario regressions: one spring, dropped body, hanging
+sheet, colliding blocks, and weak wall. Compare selected states, events, and
+bounds—not opaque frame dumps.
