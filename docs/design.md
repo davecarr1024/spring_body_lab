@@ -18,6 +18,20 @@ The model is headless. Integrators consume the same derivative definition.
 The browser is an inspector over named deterministic runs, never the source of
 simulation truth.
 
+## Phase 1: gravity
+
+Add free fall as a second `x, v` world. It supplies constant acceleration
+through the same derivative contract and has its own analytic reference:
+
+```text
+dx/dt = v
+dv/dt = g
+```
+
+This is the first proof that the integrators belong to a reusable ODE boundary,
+rather than being special-purpose spring code. Do not extract a general library
+yet: first add damping, then make the smallest honest extraction.
+
 ## Boundary
 
 Do not introduce a universal physics engine. When a second concrete scenario
