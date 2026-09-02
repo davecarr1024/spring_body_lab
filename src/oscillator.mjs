@@ -1,7 +1,7 @@
 export const solverNames = ["Euler", "Semi-implicit", "Midpoint (RK2)", "Velocity Verlet", "RK4"];
 
-export function derivative(state, { mass, stiffness, damping }) {
-  return { x: state.v, v: (-stiffness * state.x - damping * state.v) / mass };
+export function derivative(state, { mass, stiffness, damping, gravity = 0 }) {
+  return { x: state.v, v: (-stiffness * state.x - damping * state.v) / mass + gravity };
 }
 
 function add(state, delta, scale) {
@@ -48,8 +48,8 @@ export const solvers = {
   RK4: stepRk4,
 };
 
-export function energy(state, { mass, stiffness }) {
-  return 0.5 * mass * state.v ** 2 + 0.5 * stiffness * state.x ** 2;
+export function energy(state, { mass, stiffness, gravity = 0 }) {
+  return 0.5 * mass * state.v ** 2 + 0.5 * stiffness * state.x ** 2 - mass * gravity * state.x;
 }
 
 export function exactUndamped(time, initial, { mass, stiffness }) {
@@ -57,6 +57,13 @@ export function exactUndamped(time, initial, { mass, stiffness }) {
   return {
     x: initial.x * Math.cos(omega * time) + (initial.v / omega) * Math.sin(omega * time),
     v: -initial.x * omega * Math.sin(omega * time) + initial.v * Math.cos(omega * time),
+  };
+}
+
+export function exactGravity(time, initial, { gravity = -9.81 }) {
+  return {
+    x: initial.x + initial.v * time + 0.5 * gravity * time ** 2,
+    v: initial.v + gravity * time,
   };
 }
 
