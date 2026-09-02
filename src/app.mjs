@@ -85,7 +85,7 @@ function animate(now) {
   if (!state.playing) return;
   if (lastFrame !== undefined) state.time = (state.time + (now - lastFrame) / 1000) % duration;
   lastFrame = now;
-  if (lastRenderFrame === undefined || now - lastRenderFrame >= 50) {
+  if (lastRenderFrame === undefined || now - lastRenderFrame >= 200) {
     lastRenderFrame = now;
     render();
   }
