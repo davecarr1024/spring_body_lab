@@ -1,10 +1,17 @@
 import { energy, exactUndamped, run, solverNames } from "./oscillator.mjs";
 
-const state = { dt: 0.1, solver: "Semi-implicit", time: 2.5 };
-const initial = { x: 1, v: 0 };
-const parameters = { mass: 1, stiffness: 4, damping: 0 };
-const colors = { Euler: "#f15b44", "Semi-implicit": "#42b7a5", RK4: "#7199ff", exact: "#e7c26d" };
+const state = {
+  dt: 0.1,
+  solver: "Semi-implicit",
+  time: 2.5,
+  playing: false,
+  parameters: { mass: 1, stiffness: 4, damping: 0 },
+  initial: { x: 1, v: 0 },
+};
+const colors = { Euler: "#f15b44", "Semi-implicit": "#42b7a5", "Midpoint (RK2)": "#c980ff", "Velocity Verlet": "#67c4dc", RK4: "#7199ff", exact: "#e7c26d" };
 const duration = 8;
+let animationFrame;
+let lastFrame;
 
 function path(values, width, height, min, max) {
   return values.map((value, index) => {
@@ -14,7 +21,22 @@ function path(values, width, height, min, max) {
   }).join(" ");
 }
 
+function explanation() {
+  switch (state.solver) {
+    case "Euler": return "Euler samples the old velocity, so its orbit gains energy.";
+    case "Semi-implicit": return "Velocity updates before position, which keeps this oscillator bounded much longer.";
+    case "Midpoint (RK2)": return "Midpoint samples the slope halfway through the step: a cheap taste of higher-order integration.";
+    case "Velocity Verlet": return "Velocity Verlet is built for conservative mechanics and keeps energy behavior remarkably honest.";
+    default: return "RK4 samples the derivative four times, buying accuracy at extra cost.";
+  }
+}
+
+function control(id, label, value, min, max, step, suffix = "") {
+  return `<label class="range-control"><span>${label} <b>${Number(value).toFixed(step < 1 ? 2 : 1)}${suffix}</b></span><input id="${id}" type="range" min="${min}" max="${max}" step="${step}" value="${value}"></label>`;
+}
+
 function render() {
+  const { parameters, initial } = state;
   const traces = Object.fromEntries(solverNames.map((name) => [name, run({ initial, parameters, dt: state.dt, duration, solver: name })]));
   const active = traces[state.solver];
   const index = Math.min(active.length - 1, Math.round(state.time / state.dt));
@@ -34,20 +56,36 @@ function render() {
   }).join(" ");
   const exactLine = Array.from({ length: 401 }, (_, i) => exactUndamped(duration * i / 400, initial, parameters).x);
   const error = Math.abs(current.state.x - exact.x);
+  const omega = Math.sqrt(parameters.stiffness / parameters.mass);
   document.querySelector("#app").innerHTML = `
     <main class="lab-shell">
-      <header class="topline"><div><p class="eyebrow">Spring Body Lab · phase 0</p><h1>One equation. Three approximations.</h1></div><div class="equation"><span>dx/dt = v</span><span>dv/dt = −4x</span></div></header>
+      <header class="topline"><div><p class="eyebrow">Spring Body Lab · phase 0</p><h1>One equation. Five approximations.</h1></div><div class="equation"><span>dx/dt = v</span><span>dv/dt = −${(parameters.stiffness / parameters.mass).toFixed(2)}x</span></div></header>
       <section class="workbench">
         <aside class="controls"><div><p class="panel-label">Integrator</p><div class="solver-list">${solverNames.map((name) => `<button class="solver ${state.solver === name ? "selected" : ""}" data-solver="${name}"><i style="background:${colors[name]}"></i>${name}</button>`).join("")}</div></div>
-        <label class="range-control"><span>Step size <b>${state.dt.toFixed(3)} s</b></span><input id="dt" type="range" min="0.01" max="0.25" step="0.01" value="${state.dt}"><small>Make the numerical compromise visible.</small></label>
-        <div class="constants"><p class="panel-label">Fixed world</p><div><span>mass</span><b>1.00</b></div><div><span>stiffness</span><b>4.00</b></div><div><span>damping</span><b>0.00</b></div><div><span>initial x</span><b>1.00</b></div></div></aside>
+        <div class="control-group"><p class="panel-label">Experiment</p>${control("dt", "step size", state.dt, .01, .25, .01, " s")}${control("mass", "mass", parameters.mass, .25, 4, .25)}${control("stiffness", "stiffness", parameters.stiffness, .5, 12, .5)}${control("initial-x", "initial x", initial.x, -1.5, 1.5, .1)}${control("initial-v", "initial v", initial.v, -4, 4, .25)}</div>
+        <div class="constants"><p class="panel-label">Derived</p><div><span>natural ω</span><b>${omega.toFixed(3)}</b></div><div><span>period</span><b>${(2 * Math.PI / omega).toFixed(3)} s</b></div><div><span>damping</span><b>0.00</b></div></div></aside>
         <section class="instrument-panel"><div class="visual-card"><div class="card-heading"><span>Current state</span><b>t = ${current.time.toFixed(2)} s</b></div><svg class="spring-view" viewBox="0 0 430 220" aria-label="Mass on a spring"><defs><linearGradient id="bob" x1="0" x2="1"><stop stop-color="#f5d67d"/><stop offset="1" stop-color="#e99e5a"/></linearGradient></defs><path d="M42 36 H390" class="ceiling"/><path d="M70 36 V80" class="mount"/><polyline points="${spring}" class="spring"/><line x1="${bobX}" y1="72" x2="${bobX}" y2="144" class="guide"/><circle cx="${bobX}" cy="150" r="35" fill="url(#bob)" class="bob"/><text x="${bobX}" y="157" text-anchor="middle">m</text><line x1="240" y1="201" x2="${bobX}" y2="201" class="measure"/><circle cx="240" cy="201" r="3" class="origin"/></svg><div class="readout"><span>x <b>${current.state.x.toFixed(4)}</b></span><span>v <b>${current.state.v.toFixed(4)}</b></span><span>E <b>${energy(current.state, parameters).toFixed(4)}</b></span></div></div>
-        <div class="plot-card"><div class="card-heading"><span>Displacement trace</span><span class="legend"><i style="background:${colors.exact}"></i>exact <i style="background:${colors[state.solver]}"></i>${state.solver}</span></div><svg viewBox="0 0 700 250" class="plot" aria-label="Numerical and exact displacement traces"><line x1="0" x2="700" y1="125" y2="125" class="axis"/><path d="${path(exactLine, 700, 250, min, max)}" fill="none" stroke="${colors.exact}" stroke-width="2" stroke-dasharray="5 5"/><path d="${path(active.map((entry) => entry.state.x), 700, 250, min, max)}" fill="none" stroke="${colors[state.solver]}" stroke-width="3"/><line x1="${current.time / duration * 700}" x2="${current.time / duration * 700}" y1="0" y2="250" class="cursor"/></svg><input id="time" class="timeline" type="range" min="0" max="${duration}" step="${state.dt}" value="${state.time}"><div class="plot-footer"><span>0 s</span><span>4 s</span><span>8 s</span></div></div></section>
-        <aside class="evidence"><p class="panel-label">Evidence at this tick</p><div class="metric"><span>exact x</span><b>${exact.x.toFixed(5)}</b></div><div class="metric"><span>absolute error</span><b class="${error > .1 ? "warning" : ""}">${error.toExponential(2)}</b></div><div class="metric"><span>energy drift</span><b>${(energy(current.state, parameters) - 2).toExponential(2)}</b></div><div class="why"><p>Why this matters</p><span>${state.solver === "Euler" ? "Euler samples the old velocity, so its orbit gains energy." : state.solver === "Semi-implicit" ? "Velocity updates before position, which keeps this oscillator bounded much longer." : "RK4 samples the derivative four times, buying accuracy at extra cost."}</span></div></aside>
+        <div class="plot-card"><div class="card-heading"><span>Displacement trace</span><span class="legend"><i style="background:${colors.exact}"></i>exact <i style="background:${colors[state.solver]}"></i>${state.solver}</span></div><svg viewBox="0 0 700 250" class="plot" aria-label="Numerical and exact displacement traces"><line x1="0" x2="700" y1="125" y2="125" class="axis"/><path d="${path(exactLine, 700, 250, min, max)}" fill="none" stroke="${colors.exact}" stroke-width="2" stroke-dasharray="5 5"/><path d="${path(active.map((entry) => entry.state.x), 700, 250, min, max)}" fill="none" stroke="${colors[state.solver]}" stroke-width="3"/><line x1="${current.time / duration * 700}" x2="${current.time / duration * 700}" y1="0" y2="250" class="cursor"/></svg><div class="transport"><button id="play" class="play">${state.playing ? "❚❚ Pause" : "▶ Play"}</button><button id="reset" class="reset">Reset</button><input id="time" class="timeline" type="range" min="0" max="${duration}" step="${state.dt}" value="${state.time}"></div><div class="plot-footer"><span>0 s</span><span>4 s</span><span>8 s</span></div></div></section>
+        <aside class="evidence"><p class="panel-label">Evidence at this tick</p><div class="metric"><span>exact x</span><b>${exact.x.toFixed(5)}</b></div><div class="metric"><span>absolute error</span><b class="${error > .1 ? "warning" : ""}">${error.toExponential(2)}</b></div><div class="metric"><span>energy drift</span><b>${(energy(current.state, parameters) - energy(initial, parameters)).toExponential(2)}</b></div><div class="why"><p>Why this matters</p><span>${explanation()}</span></div></aside>
       </section><footer><span>Undamped harmonic oscillator · analytic reference available</span><span>Headless model • deterministic trace • browser inspector</span></footer></main>`;
-  document.querySelectorAll("[data-solver]").forEach((button) => button.addEventListener("click", () => { state.solver = button.dataset.solver; render(); }));
-  document.querySelector("#dt").addEventListener("input", (event) => { state.dt = Number(event.target.value); state.time = 2.5; render(); });
-  document.querySelector("#time").addEventListener("input", (event) => { state.time = Number(event.target.value); render(); });
+  document.querySelectorAll("[data-solver]").forEach((button) => button.addEventListener("click", () => { state.solver = button.dataset.solver; state.playing = false; render(); }));
+  const update = (id, setter) => document.querySelector(`#${id}`).addEventListener("input", (event) => { setter(Number(event.target.value)); state.playing = false; state.time = 0; render(); });
+  update("dt", (value) => { state.dt = value; });
+  update("mass", (value) => { parameters.mass = value; });
+  update("stiffness", (value) => { parameters.stiffness = value; });
+  update("initial-x", (value) => { initial.x = value; });
+  update("initial-v", (value) => { initial.v = value; });
+  document.querySelector("#time").addEventListener("input", (event) => { state.playing = false; state.time = Number(event.target.value); render(); });
+  document.querySelector("#play").addEventListener("click", () => { state.playing = !state.playing; if (state.playing) { lastFrame = undefined; animationFrame = requestAnimationFrame(animate); } else { cancelAnimationFrame(animationFrame); } render(); });
+  document.querySelector("#reset").addEventListener("click", () => { state.playing = false; state.time = 0; cancelAnimationFrame(animationFrame); render(); });
+}
+
+function animate(now) {
+  if (!state.playing) return;
+  if (lastFrame !== undefined) state.time = (state.time + (now - lastFrame) / 1000) % duration;
+  lastFrame = now;
+  render();
+  animationFrame = requestAnimationFrame(animate);
 }
 
 render();
