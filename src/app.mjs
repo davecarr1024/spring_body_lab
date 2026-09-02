@@ -12,6 +12,7 @@ const colors = { Euler: "#f15b44", "Semi-implicit": "#42b7a5", "Midpoint (RK2)":
 const duration = 8;
 let animationFrame;
 let lastFrame;
+let lastRenderFrame;
 
 function path(values, width, height, min, max) {
   return values.map((value, index) => {
@@ -76,7 +77,7 @@ function render() {
   update("initial-x", (value) => { initial.x = value; });
   update("initial-v", (value) => { initial.v = value; });
   document.querySelector("#time").addEventListener("input", (event) => { state.playing = false; state.time = Number(event.target.value); render(); });
-  document.querySelector("#play").addEventListener("click", () => { state.playing = !state.playing; if (state.playing) { lastFrame = undefined; animationFrame = requestAnimationFrame(animate); } else { cancelAnimationFrame(animationFrame); } render(); });
+  document.querySelector("#play").addEventListener("click", () => { state.playing = !state.playing; if (state.playing) { lastFrame = undefined; lastRenderFrame = undefined; animationFrame = requestAnimationFrame(animate); } else { cancelAnimationFrame(animationFrame); } render(); });
   document.querySelector("#reset").addEventListener("click", () => { state.playing = false; state.time = 0; cancelAnimationFrame(animationFrame); render(); });
 }
 
@@ -84,7 +85,10 @@ function animate(now) {
   if (!state.playing) return;
   if (lastFrame !== undefined) state.time = (state.time + (now - lastFrame) / 1000) % duration;
   lastFrame = now;
-  render();
+  if (lastRenderFrame === undefined || now - lastRenderFrame >= 50) {
+    lastRenderFrame = now;
+    render();
+  }
   animationFrame = requestAnimationFrame(animate);
 }
 
