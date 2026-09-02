@@ -1,4 +1,4 @@
-export const solverNames = ["Euler", "Semi-implicit", "RK4"];
+export const solverNames = ["Euler", "Semi-implicit", "Midpoint (RK2)", "Velocity Verlet", "RK4"];
 
 export function derivative(state, { mass, stiffness, damping }) {
   return { x: state.v, v: (-stiffness * state.x - damping * state.v) / mass };
@@ -17,6 +17,18 @@ export function stepSemiImplicit(state, parameters, dt) {
   return { x: state.x + v * dt, v };
 }
 
+export function stepMidpoint(state, parameters, dt) {
+  const half = add(state, derivative(state, parameters), dt / 2);
+  return add(state, derivative(half, parameters), dt);
+}
+
+export function stepVelocityVerlet(state, parameters, dt) {
+  const acceleration = derivative(state, parameters).v;
+  const x = state.x + state.v * dt + 0.5 * acceleration * dt ** 2;
+  const nextAcceleration = derivative({ x, v: state.v }, parameters).v;
+  return { x, v: state.v + 0.5 * (acceleration + nextAcceleration) * dt };
+}
+
 export function stepRk4(state, parameters, dt) {
   const k1 = derivative(state, parameters);
   const k2 = derivative(add(state, k1, dt / 2), parameters);
@@ -28,7 +40,13 @@ export function stepRk4(state, parameters, dt) {
   };
 }
 
-export const solvers = { Euler: stepEuler, "Semi-implicit": stepSemiImplicit, RK4: stepRk4 };
+export const solvers = {
+  Euler: stepEuler,
+  "Semi-implicit": stepSemiImplicit,
+  "Midpoint (RK2)": stepMidpoint,
+  "Velocity Verlet": stepVelocityVerlet,
+  RK4: stepRk4,
+};
 
 export function energy(state, { mass, stiffness }) {
   return 0.5 * mass * state.v ** 2 + 0.5 * stiffness * state.x ** 2;
