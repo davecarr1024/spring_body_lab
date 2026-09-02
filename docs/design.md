@@ -27,3 +27,12 @@ integrators, deterministic traces, and analytic-test helpers.
 Future branches are rigid bodies (poses, inertia, impulses, joints) and spring
 bodies (particles, bonds, fracture, collision skin), as described in the root
 developer record's future-project designs.
+
+## Later Shader and Fluid Chapter
+
+Fluid simulation is a later sibling adventure, not the next feature. Begin it
+as an accessible grid-based dye-and-velocity experiment, then use fragment or
+compute shaders for advection and pressure projection. It shares the project's
+energy, numerical-stability, deterministic-scenario, and visualization values,
+but should earn its own model and tests before sharing implementation details
+with solids.
