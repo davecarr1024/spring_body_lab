@@ -14,7 +14,7 @@ that remains synchronized with implementation.
 | Inspectable causality | Forces and later contacts/events are first-class output rather than renderer analysis. | Browser renders a physics force record and state returned by `StepResult`. | Add contact candidate/correction records with fixed geometry. |
 | Direct domain modelling | The kernel models vectors, geometry, particles, springs, and world state directly. | Validated `Vec2`, segments/AABBs, particle/spring definitions. | Keep mesh topology distinct from spring graph. |
 | Tests as deliverable | Public behavior is tested by library layer. | 100% current production line/function coverage; boundary/degenerate cases included. | Raise branch coverage through command/replay validation and implement the planned Playwright browser suite. |
-| Clear interfaces | Each layer owns distinct types and uses public index entry points. | `src/math/index.mjs`, `src/physics/index.mjs`, `src/game/index.mjs`. | Document semantic-version-like compatibility decisions if external reuse begins. |
+| Clear interfaces | Each layer owns distinct types and uses public index entry points. | `src/math/index.mjs`, `src/physics/index.mjs`, `src/game/index.mjs`; math owns validated absolute/relative tolerance values. | Document semantic-version-like compatibility decisions if external reuse begins. |
 
 ## Conclusions
 

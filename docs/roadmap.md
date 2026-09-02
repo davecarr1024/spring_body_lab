@@ -4,15 +4,15 @@ Each phase is a vertical slice. It is complete only when its public library
 interface, headless proof, focused tests, documentation, and inspectable
 artifact exist. A browser feature never substitutes for lower-layer evidence.
 
-## Phase 1 — Math and geometry kernel (active)
+## Phase 1 — Math and geometry kernel (complete)
 
 **Deliverable:** immutable `Vec2`, scalar/tolerance helpers, segments, AABBs,
 closest-point/distance, orientation, and classified segment intersections.
 
-**Evidence:** table-driven geometric boundary cases, diagnostic results, and
-100% production line/function coverage. The first implementation exists; the
-next bite is to harden its documented tolerance policy and results before
-physics needs more geometry.
+**Evidence:** table-driven geometric boundary cases, diagnostic results,
+explicit absolute/relative tolerance values threaded through vector/geometry
+queries, and 100% production line/function coverage. The physics layer now
+consumes this completed public boundary rather than reimplementing geometry.
 
 ## Phase 2 — Physics kernel: one spring (active)
 

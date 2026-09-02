@@ -22,14 +22,16 @@ on a test, a renderer, or an ambient clock/random source.
 
 ## Math and geometry API
 
-`scalar.mjs` owns the shared epsilon, finite-number check, scaled approximate
-comparison, and immutable diagnostic value. `vec2.mjs` exports immutable vector
-values and pure arithmetic, dot/cross, length/distance, normalization, and
-projection. Normalization and projection return tagged `unit`/`point` or
-`degenerate` results.
+`scalar.mjs` owns validated immutable absolute/relative tolerance values,
+finite-number checks, scaled approximate comparison, near-zero classification,
+and immutable diagnostics. `vec2.mjs` exports immutable vector values and pure
+arithmetic, dot/cross, length/distance, normalization, and projection.
+Normalization and projection return tagged `unit`/`point` or `degenerate`
+results and accept the shared tolerance contract.
 
 `geometry.mjs` validates `Segment2` and `Aabb2` values and returns structured
-success/diagnostic results. Its intersection operation returns one of
+success/diagnostic results. Closest-point and intersection queries accept the
+same tolerance contract. Its intersection operation returns one of
 `none`, `point`, `overlap`, or `degenerate`; a point includes its witness and
 whether it is an endpoint touch. This makes contact code a future consumer of
 geometry evidence rather than the owner of private segment arithmetic.

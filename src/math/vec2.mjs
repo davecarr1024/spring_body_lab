@@ -1,4 +1,4 @@
-import { EPSILON, isFiniteNumber } from "./scalar.mjs";
+import { defaultTolerance, isFiniteNumber, isNearZero } from "./scalar.mjs";
 
 export const vec2 = (x, y) => Object.freeze({ x, y });
 export const zero = vec2(0, 0);
@@ -18,14 +18,14 @@ export function lengthSquared(value) { return dot(value, value); }
 export function length(value) { return Math.sqrt(lengthSquared(value)); }
 export function distance(left, right) { return length(subtract(left, right)); }
 
-export function normalize(value, epsilon = EPSILON) {
+export function normalize(value, tolerance = defaultTolerance) {
   const magnitude = length(value);
-  if (magnitude <= epsilon) return Object.freeze({ kind: "degenerate" });
+  if (isNearZero(magnitude, tolerance)) return Object.freeze({ kind: "degenerate" });
   return Object.freeze({ kind: "unit", value: scale(value, 1 / magnitude) });
 }
 
-export function project(value, onto) {
+export function project(value, onto, tolerance = defaultTolerance) {
   const denominator = lengthSquared(onto);
-  if (denominator <= EPSILON ** 2) return Object.freeze({ kind: "degenerate" });
+  if (isNearZero(denominator, { absolute: tolerance.absolute ** 2, relative: tolerance.relative })) return Object.freeze({ kind: "degenerate" });
   return Object.freeze({ kind: "point", value: scale(onto, dot(value, onto) / denominator) });
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { add, approximatelyEqual, cross, diagnostic, distance, dot, isFiniteNumber, isFiniteVec2, length, normalize, perpendicular, project, scale, subtract, vec2, zero } from "../../src/math/index.mjs";
+import { add, approximatelyEqual, createTolerance, cross, defaultTolerance, diagnostic, distance, dot, isFiniteNumber, isFiniteVec2, isNearZero, length, normalize, perpendicular, project, scale, subtract, vec2, zero } from "../../src/math/index.mjs";
 
 test("Vec2 values are finite immutable values with composable arithmetic", () => {
   const left = vec2(3, 4);
@@ -34,5 +34,13 @@ test("scalar helpers centralize numeric and diagnostic policy", () => {
   assert.equal(isFiniteNumber("3"), false);
   assert.equal(approximatelyEqual(1, 1 + 1e-10), true);
   assert.equal(approximatelyEqual(1, 1.1), false);
+  const tolerance = createTolerance({ absolute: .01, relative: .001 });
+  assert.equal(tolerance.ok, true);
+  assert.equal(Object.isFrozen(tolerance.value), true);
+  assert.equal(approximatelyEqual(100, 100.05, tolerance.value), true);
+  assert.equal(isNearZero(.009, tolerance.value), true);
+  assert.equal(isNearZero(.02, tolerance.value), false);
+  assert.equal(defaultTolerance.absolute, 1e-9);
+  assert.equal(createTolerance({ absolute: -1 }).ok, false);
   assert.deepEqual(diagnostic("bad", "thing", "explain"), { code: "bad", subject: "thing", message: "explain" });
 });

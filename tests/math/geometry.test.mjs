@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { aabb, aabbFromPoints, closestPoint, orientation, overlaps, pointSegmentDistance, segment, segmentIntersection, vec2 } from "../../src/math/index.mjs";
+import { aabb, aabbFromPoints, closestPoint, createTolerance, orientation, overlaps, pointSegmentDistance, segment, segmentIntersection, vec2 } from "../../src/math/index.mjs";
 
 const makeSegment = (start, end) => segment(vec2(...start), vec2(...end)).value;
 
@@ -30,4 +30,10 @@ test("segment intersections classify crossing, touch, overlap, none, and degener
   assert.deepEqual(segmentIntersection(makeSegment([0, 0], [1, 0]), makeSegment([0, 1], [1, 1])), { kind: "none" });
   assert.deepEqual(segmentIntersection(makeSegment([0, 0], [1, 0]), makeSegment([2, 0], [3, 0])), { kind: "none" });
   assert.deepEqual(segmentIntersection(makeSegment([0, 0], [0, 0]), makeSegment([0, 0], [1, 1])), { kind: "degenerate" });
+});
+
+test("geometry queries apply the caller's explicit tolerance policy", () => {
+  const tolerance = createTolerance({ absolute: .1, relative: 0 }).value;
+  assert.equal(closestPoint(vec2(1, 1), makeSegment([0, 0], [.05, 0]), tolerance).kind, "degenerate");
+  assert.equal(segmentIntersection(makeSegment([0, 0], [1, 0]), makeSegment([1.05, 0], [2, 0]), tolerance).kind, "point");
 });
