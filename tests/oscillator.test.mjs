@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { energy, exactUndamped, run, stepEuler, stepSemiImplicit } from "../src/oscillator.mjs";
+import {
+  energy,
+  exactUndamped,
+  run,
+  stepEuler,
+  stepSemiImplicit,
+  stepVelocityVerlet,
+} from "../src/oscillator.mjs";
 
 const parameters = { mass: 1, stiffness: 4, damping: 0 };
 const initial = { x: 1, v: 0 };
@@ -28,4 +35,10 @@ test("Euler gains energy while semi-implicit Euler remains comparatively bounded
   for (let step = 0; step < 100; step += 1) { euler = stepEuler(euler, parameters, .1); semi = stepSemiImplicit(semi, parameters, .1); }
   assert.ok(energy(euler, parameters) > energy(initial, parameters) * 20);
   assert.ok(Math.abs(energy(semi, parameters) - energy(initial, parameters)) < .6);
+});
+
+test("velocity Verlet keeps an undamped oscillator's energy bounded", () => {
+  let state = initial;
+  for (let step = 0; step < 1000; step += 1) state = stepVelocityVerlet(state, parameters, .1);
+  assert.ok(Math.abs(energy(state, parameters) - energy(initial, parameters)) < .03);
 });
