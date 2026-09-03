@@ -14,16 +14,15 @@ explicit absolute/relative tolerance values threaded through vector/geometry
 queries, and 100% production line/function coverage. The physics layer now
 consumes this completed public boundary rather than reimplementing geometry.
 
-## Phase 2 — Physics kernel: one spring (active)
+## Phase 2 — Physics kernel: one spring (complete)
 
 **Deliverable:** validated immutable definition/state values, fixed-step
 semi-implicit Euler, force records, and command-driven impulses for a
 pinned/free spring.
 
 **Evidence:** equal-and-opposite spring force, rest-length zero force, pinned
-invariance, malformed-world diagnostics, deterministic replay, and a readable
-step record. The first implementation exists; its next bite is explicit trace
-and replay artifacts rather than more scene features.
+invariance, malformed-world diagnostics, immutable step-indexed trace entries,
+and deterministic replay that reconstructs the recorded `StepResult` evidence.
 
 ## Phase 3 — First browser game slice (active)
 

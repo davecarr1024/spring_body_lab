@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { vec2, zero } from "../../src/math/index.mjs";
-import { createInitialState, createWorldDefinition, step } from "../../src/physics/index.mjs";
+import { appendTraceStep, createInitialState, createTrace, createWorldDefinition, replayTrace, step } from "../../src/physics/index.mjs";
 
 function world(overrides = {}) {
   return createWorldDefinition({ gravity: zero, dt: .1, particles: [
@@ -45,4 +45,15 @@ test("rest-length, commands, and a degenerate spring have explicit behavior", ()
   assert.equal(rejected.state.particles[1].velocity.x, 0);
   const degenerate = world({ particles: [{ id: "pin", position: zero, velocity: zero, inverseMass: 0 }, { id: "free", position: zero, velocity: zero, inverseMass: 1 }] }).value;
   assert.deepEqual(step(degenerate, createInitialState(degenerate)).forces[0], { springId: "spring", kind: "degenerate" });
+});
+
+test("traces retain immutable step-indexed commands and replay their evidence", () => {
+  const definition = world().value;
+  const initial = createTrace(definition);
+  const first = appendTraceStep(initial, [{ kind: "applyImpulse", particleId: "free", impulse: vec2(2, 0) }]);
+  const trace = appendTraceStep(first.trace);
+  assert.deepEqual(trace.trace.entries.map((entry) => entry.stepIndex), [0, 1]);
+  assert.equal(Object.isFrozen(trace.trace.entries[0].commands[0]), true);
+  assert.deepEqual(trace.trace.entries[0].commands[0].impulse, vec2(2, 0));
+  assert.deepEqual(replayTrace(trace.trace), trace.trace);
 });

@@ -1,5 +1,5 @@
 import { vec2, zero } from "../math/index.mjs";
-import { createInitialState, createWorldDefinition, step } from "../physics/index.mjs";
+import { appendTraceStep, createTrace, createWorldDefinition } from "../physics/index.mjs";
 
 export function createSpringToy() {
   const definition = createWorldDefinition({
@@ -12,11 +12,11 @@ export function createSpringToy() {
     springs: [{ id: "main", a: "anchor", b: "bob", restLength: 120, stiffness: 24, damping: 2 }],
   });
   if (!definition.ok) throw new Error("The built-in spring toy must be valid.");
-  return Object.freeze({ definition: definition.value, state: createInitialState(definition.value), commands: Object.freeze([]) });
+  const trace = createTrace(definition.value);
+  return Object.freeze({ definition: definition.value, state: trace.state, trace });
 }
 
 export function advanceGame(game, commands = []) {
-  const result = step(game.definition, game.state, commands);
-  const recordedCommands = commands.map((command) => Object.freeze({ ...command }));
-  return Object.freeze({ game: Object.freeze({ definition: game.definition, state: result.state, commands: Object.freeze([...game.commands, ...recordedCommands]) }), result });
+  const advancedTrace = appendTraceStep(game.trace, commands);
+  return Object.freeze({ game: Object.freeze({ definition: game.definition, state: advancedTrace.trace.state, trace: advancedTrace.trace }), result: advancedTrace.result });
 }

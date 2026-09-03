@@ -8,8 +8,8 @@ test("the game slice consumes a valid physics world and records its command", ()
   assert.equal(game.definition.particles.length, 2);
   const advanced = advanceGame(game, [{ kind: "applyImpulse", particleId: "bob", impulse: vec2(0, -5) }]);
   assert.equal(advanced.game.state.stepIndex, 1);
-  assert.equal(advanced.game.commands.length, 1);
-  assert.equal(Object.isFrozen(advanced.game.commands[0]), true);
+  assert.equal(advanced.game.trace.entries.length, 1);
+  assert.equal(Object.isFrozen(advanced.game.trace.entries[0].commands[0]), true);
   assert.equal(advanced.result.forces[0].kind, "force");
 });
 
@@ -18,5 +18,5 @@ test("identical game commands produce an identical deterministic step", () => {
   const first = advanceGame(createSpringToy(), [command]);
   const second = advanceGame(createSpringToy(), [command]);
   assert.deepEqual(first.result, second.result);
-  assert.deepEqual(first.game.commands, second.game.commands);
+  assert.deepEqual(first.game.trace, second.game.trace);
 });

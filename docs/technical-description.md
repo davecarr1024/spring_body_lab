@@ -60,7 +60,12 @@ the negative of force on `a`; pins retain their exact state. `applyImpulse` is
 the only implemented command and converts a finite game impulse to a velocity
 change through inverse mass. Malformed/unknown commands are rejected into
 structured `invalid_command` diagnostics without advancing an invalid impulse.
-Replay serialization is the next boundary refinement.
+
+`createTrace` owns a definition, initial state, current state, and immutable
+ordered entries. `appendTraceStep` freezes a command record alongside the
+pre-step index and returned `StepResult`. `replayTrace` starts at the retained
+initial state and reconstructs the complete trace from those records. This is
+in-memory replay evidence; serialization/persistence is deliberately deferred.
 
 ## Game and browser
 

@@ -25,7 +25,8 @@ Open `dist/index.html` after building.
 - immutable vector, scalar-tolerance, segment, AABB, closest-point, and
   classified-intersection APIs;
 - validated immutable physics worlds with one fixed-step spring transition;
-- force evidence, pin handling, and command-driven impulses;
+- force evidence, pin handling, command-driven impulses, and deterministic
+  in-memory trace/replay;
 - a headless game slice plus a browser view of its returned physics evidence.
 
 This is not yet collision or a complete soft-body game. The current slice is a
