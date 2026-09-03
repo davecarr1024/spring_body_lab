@@ -1,20 +1,21 @@
 # Browser Testing Plan
 
 Phase 3 exits only when the built browser artifact has repeatable automated
-evidence. The project will use Playwright Test because it can start a local
+evidence. The project uses Playwright Test because it can start a local
 static server, drive a real Chromium page, and retain screenshots/traces when a
 test fails.
 
-## Intended setup
+## Implemented setup
 
-Add `@playwright/test` as a development dependency with a Playwright
-configuration that:
+`@playwright/test` is a development dependency. `playwright.config.mjs`:
 
 - runs `npm run build` before browser tests;
 - serves `dist/` on a local fixed test URL through Playwright's `webServer`;
-- uses Chromium initially, with retries and failure traces only in CI;
+- uses Chromium initially, with retries only in CI and failure
+  traces/screenshots in every environment;
 - keeps browser specs under `tests/browser/`; and
-- adds `npm run test:browser` and then includes it in `npm run check`.
+- provides `npm run test:browser`, which `npm run check` runs after headless
+  coverage.
 
 The browser runner is a consumer of the static artifact. It must not import
 private source modules or use page evaluation to calculate expected physics.
@@ -38,15 +39,16 @@ the sole proof of physics behavior.
 
 ## Artifacts and responsibilities
 
-On failure, CI should retain Playwright's trace and screenshot artifacts. A
+On failure, Playwright retains trace and screenshot artifacts in ignored local
+result directories; CI should upload the same artifacts when it is added. A
 browser failure diagnoses the browser/game boundary; it does not loosen a
 headless physics assertion. New overlays and controls require one smoke test
 that proves they display an existing public record rather than browser-derived
 analysis.
 
-## Admission gate
+## Completed admission gate
 
-Install and configure Playwright only as one focused Phase 3 unit: dependency,
-static server, five smoke cases, failure artifacts, and CI command. Do not add
-cross-browser matrices, visual-diff baselines, or end-to-end game scenarios
-until this small suite is stable.
+The focused Phase 3 unit is complete: dependency, static server, five smoke
+cases, and failure artifacts. Do not add cross-browser matrices, visual-diff
+baselines, or end-to-end game scenarios until a concrete game feature needs
+them.

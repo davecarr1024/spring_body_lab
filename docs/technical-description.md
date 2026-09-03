@@ -79,16 +79,17 @@ and spring force record.
 `dist/src/` and rewrites the static page paths. `dist/` is generated and not
 source-controlled. Browser source is excluded from headless coverage because
 it is platform glue; the required evidence for it is a successful static build
-and, at Phase 3 exit, Playwright browser smoke tests. The planned configuration
-starts the built static artifact with Playwright's local `webServer`, drives
+and, at Phase 3 exit, Playwright browser smoke tests. `playwright.config.mjs`
+starts the built static artifact with a local `webServer`, drives
 role-addressable controls, and retains trace/screenshot artifacts on failures;
 see [browser-testing.md](browser-testing.md).
 
 ## Verification contract
 
 `npm test` runs tests split by math, physics, and game layer. `npm run
-coverage` runs the same suite with Node's coverage report. `npm run check`
-runs coverage then produces the browser artifact. The current headless
+coverage` runs the same suite with Node's coverage report. `npm run
+test:browser` runs the five built-artifact Playwright smoke tests. `npm run
+check` runs coverage then the browser suite. The current headless
 production modules have 100% line/function coverage; branch coverage is
 reported and should increase as validation/replay cases are added.
 
@@ -96,5 +97,5 @@ The library tests prove public behavior rather than source-only output:
 vectors/geometry classify boundaries, invalid worlds report diagnostics, a
 spring's force is equal/opposite and zero at rest, pins remain fixed, impulses
 pass through the game/physics boundary, and a degenerate spring remains an
-explicit record. The missing browser automation is documented in the roadmap,
-not silently treated as model coverage.
+explicit record. Browser tests prove initial render, Step/Kick/Reset, and stable
+Play/Pause controls without duplicating the physics model in page code.

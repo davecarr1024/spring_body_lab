@@ -14,6 +14,7 @@ the public math layer and returns the forces and state the browser displays.
 ```bash
 npm test
 npm run coverage
+npm run test:browser
 npm run build
 npm run check
 ```
@@ -29,8 +30,8 @@ Open `dist/index.html` after building.
   in-memory trace/replay;
 - a headless game slice plus a browser view of its returned physics evidence.
 
-This is not yet collision or a complete soft-body game. The current slice is a
-proof that the layers compose correctly; fixed geometry contact is next.
+This is not yet collision or a complete soft-body game. Phases 1–3 prove the
+layers compose correctly; fixed geometry contact is next.
 
 ## Read deeper
 
@@ -49,6 +50,5 @@ proof that the layers compose correctly; fixed geometry contact is next.
 
 ## Next small step
 
-Finish explicit trace/replay evidence for the physics step, then introduce one
-fixed geometry contact through the public math API. No new browser feature
-should precede that headless proof.
+Introduce one fixed geometry contact through the public math API, with a
+bounded correction record before expanding the browser scene.

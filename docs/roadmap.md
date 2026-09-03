@@ -24,15 +24,16 @@ pinned/free spring.
 invariance, malformed-world diagnostics, immutable step-indexed trace entries,
 and deterministic replay that reconstructs the recorded `StepResult` evidence.
 
-## Phase 3 — First browser game slice (active)
+## Phase 3 — First browser game slice (complete)
 
 **Deliverable:** a browser scene whose Step/Play/Kick controls issue game
 commands to the physics library and display returned evidence.
 
-**Evidence:** a built static artifact plus Playwright smoke tests showing that
-each control changes the public game/physics state, never browser-owned state.
-The minimal scene exists; implement the focused
-[browser-testing plan](browser-testing.md) as its remaining exit evidence.
+**Evidence:** five Playwright Chromium smoke tests run the built static
+artifact, cover initial/Step/Kick/Reset/Play-Pause behavior, assert public
+evidence, and retain traces/screenshots on failure. The suite found and fixed
+an animation re-render that made Pause unstable, proving the browser boundary
+rather than merely loading the page.
 
 ## Phase 4 — Fixed geometry contact
 

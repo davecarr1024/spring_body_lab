@@ -9,11 +9,11 @@ that remains synchronized with implementation.
 | --- | --- | --- | --- |
 | One concrete world | The target is a 2D soft-body game, not a general physics platform. | Design names rope/sheet/block/wall scenes and excludes ECS/GPU/general colliders. | Reject abstractions that no current scene needs. |
 | Composition from simple concepts | Public math → physics → game → browser dependency direction. | Separate directories and public entry points; browser uses game API, game uses physics API. | Keep imports one-way during contact/generation work. |
-| Vertical slices | Each phase must create an independently runnable lower-layer artifact before expanding scope. | Two-particle spring is a headless physics probe with trace/replay plus a browser/game slice. | Complete the browser smoke suite before fixed contact. |
+| Vertical slices | Each phase must create an independently runnable lower-layer artifact before expanding scope. | Two-particle spring is a headless physics probe with trace/replay plus a Playwright-proved browser/game slice. | Begin one fixed-contact slice. |
 | Determinism | State transition is fixed-step and values/commands are immutable. | World definition/state, step-indexed trace entries, `StepResult`, stable IDs, and whole-trace replay tests. | Add serialized replay and later contact tie-break tests. |
 | Inspectable causality | Forces and later contacts/events are first-class output rather than renderer analysis. | Browser renders a physics force record and state returned by `StepResult`. | Add contact candidate/correction records with fixed geometry. |
 | Direct domain modelling | The kernel models vectors, geometry, particles, springs, and world state directly. | Validated `Vec2`, segments/AABBs, particle/spring definitions. | Keep mesh topology distinct from spring graph. |
-| Tests as deliverable | Public behavior is tested by library layer. | 100% current production line/function coverage; boundary/degenerate cases included. | Raise branch coverage through command/replay validation and implement the planned Playwright browser suite. |
+| Tests as deliverable | Public behavior is tested by library layer and browser boundary. | 100% current production line/function coverage; boundary/degenerate cases plus five Playwright smoke cases. | Raise branch coverage through command/replay validation. |
 | Clear interfaces | Each layer owns distinct types and uses public index entry points. | `src/math/index.mjs`, `src/physics/index.mjs`, `src/game/index.mjs`; math owns validated absolute/relative tolerance values. | Document semantic-version-like compatibility decisions if external reuse begins. |
 
 ## Conclusions

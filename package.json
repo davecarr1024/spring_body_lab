@@ -5,8 +5,13 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
+    "serve:dist": "node scripts/serve-dist.mjs",
     "test": "node --test tests",
     "coverage": "node --test --experimental-test-coverage tests",
-    "check": "npm run coverage && npm run build"
+    "test:browser": "playwright test",
+    "check": "npm run coverage && npm run test:browser"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
   }
 }
