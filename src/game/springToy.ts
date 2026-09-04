@@ -39,14 +39,15 @@ export function createMultiBodyLab() {
 
 export function advanceGame(game: any, commands: any[] = []) {
   const advancedTrace = appendTraceStep(game.trace, commands);
-  const goal = game.goal && Object.freeze({ ...game.goal, achieved: goalAchieved(game.goal, advancedTrace.trace.state) });
+  const goal = game.goal && Object.freeze({ ...game.goal, achieved: goalAchieved(game.goal, advancedTrace.trace.state, advancedTrace.result) });
   return Object.freeze({ game: Object.freeze({ ...game, state: advancedTrace.trace.state, trace: advancedTrace.trace, ...(goal ? { goal } : {}) }), result: advancedTrace.result });
 }
 
-function goalAchieved(goal: any, state: any) {
+function goalAchieved(goal: any, state: any, result: any) {
   if (goal.kind === "breach") return goal.requiredSpringIds.every((springId: string) => state.brokenSpringIds.includes(springId));
   if (goal.kind === "reach_x") return state.particles.find((particle: any) => particle.id === goal.particleId)?.position.x >= goal.minimumX;
   if (goal.kind === "reach_y") return state.particles.every((particle: any) => !goal.particleIds.includes(particle.id) || particle.position.y <= goal.maximumY);
+  if (goal.kind === "ram_contact") return result.contacts.some((contact: any) => contact.kind === "particle_particle" && contact.particleIds.includes(goal.ramId));
   return false;
 }
 
@@ -119,4 +120,20 @@ export function createSheetLift() {
 export function liftSheet(game: any) {
   if (game.scene !== "sheet-lift") return Object.freeze({ game, result: undefined });
   return advanceGame(game, [{ kind: "applyImpulse", particleId: "sheet:p:1:0", impulse: vec2(0, -300) }, { kind: "applyImpulse", particleId: "sheet:p:1:1", impulse: vec2(0, -300) }]);
+}
+
+/** Builds a deformable block and a separate ram particle for contact inspection. */
+export function createBlockRam() {
+  const recipe = createGridBody({ id: "block", rows: 2, columns: 2, origin: vec2(270, 140), spacing: 28, radius: 10, stiffness: 90, damping: 5 });
+  if (!recipe.ok) throw new Error("The built-in block recipe must be valid.");
+  const definition = createWorldDefinition({ gravity: zero, dt: 1 / 60, contact: { tolerance: 1e-6, maxCorrection: 20, restitution: 0, iterations: 2 }, particles: [...recipe.value.particles, { id: "ram", position: vec2(235, 154), velocity: zero, inverseMass: 1, radius: 12 }], springs: recipe.value.springs });
+  if (!definition.ok) throw new Error("The built-in block ram world must be valid.");
+  const trace = createTrace(definition.value);
+  return Object.freeze({ scene: "block-ram", definition: definition.value, state: trace.state, trace, bodies: Object.freeze([recipe.value]), goal: Object.freeze({ kind: "ram_contact", ramId: "ram", achieved: false }) });
+}
+
+/** Launches the distinct ram particle; success comes from a returned narrow-phase contact. */
+export function launchRam(game: any) {
+  if (game.scene !== "block-ram") return Object.freeze({ game, result: undefined });
+  return advanceGame(game, [{ kind: "applyImpulse", particleId: "ram", impulse: vec2(1800, 0) }]);
 }

@@ -41,6 +41,7 @@ Open `dist/index.html` after building.
   replayable fracture outcome from returned physics evidence; and
 - a named pinned-rope swing scene with a state-derived target goal.
 - a named pinned-sheet lift scene with a deterministic lower-edge target.
+- a named block-and-ram scene whose outcome requires returned particle contact.
 
 This is not yet a complete soft-body game. Phases 1–7 prove the layers compose
 correctly; named playable rope, sheet, block, weak-wall, and ram scenes are
@@ -67,5 +68,5 @@ next.
 
 ## Next small step
 
-Add block and a distinct ram scene while keeping goals and replay evidence as
-explicit as the weak-wall breach, rope swing, and sheet lift.
+Phase 8's named scenes are now in place; the next work is a completion audit
+and any evidence-driven physics-library gaps it exposes.

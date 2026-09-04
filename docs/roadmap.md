@@ -81,8 +81,8 @@ seam IDs and a breach goal. Its Ram action maps to recorded physics impulses;
 one deterministic step returns four break events, splits the wall, marks the
 goal achieved, and replays identically. The browser exposes and tests this
 path. Named pinned rope/swing and sheet/lift scenes now provide the same
-replayable goal evidence. Block and a distinct ram scene remain required to
-complete the phase.
+replayable goal evidence. A block-and-ram scene proves a distinct physical ram
+contact through returned narrow-phase evidence.
 
 ## Deferred proposals
 

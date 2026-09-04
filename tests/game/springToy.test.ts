@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { vec2 } from "../../src/math/index.js";
-import { advanceGame, createMultiBodyLab, createRopeSwing, createSheetLift, createSpringToy, createWeakWallBreach, liftSheet, ramWeakWall, swingRope } from "../../src/game/index.js";
+import { advanceGame, createBlockRam, createMultiBodyLab, createRopeSwing, createSheetLift, createSpringToy, createWeakWallBreach, launchRam, liftSheet, ramWeakWall, swingRope } from "../../src/game/index.js";
 
 test("the game slice consumes a valid physics world and records its command", () => {
   const game = createSpringToy();
@@ -70,4 +70,13 @@ test("the sheet scene lifts its lower edge to a deterministic state-derived goal
   assert.deepEqual(lifted.game.state.particles.filter((particle) => particle.id.startsWith("sheet:p:1:")).map((particle) => particle.position.y), [143, 143]);
   assert.deepEqual(liftSheet(createSheetLift()), lifted);
   assert.equal(liftSheet(createRopeSwing()).result, undefined);
+});
+
+test("the block-ram scene derives success from a returned particle contact", () => {
+  const block = createBlockRam();
+  const rammed = launchRam(block);
+  assert.equal(rammed.game.goal.achieved, true);
+  assert.equal(rammed.result.contacts.some((contact) => contact.kind === "particle_particle" && contact.particleIds.includes("ram")), true);
+  assert.deepEqual(launchRam(createBlockRam()), rammed);
+  assert.equal(launchRam(createSheetLift()).result, undefined);
 });

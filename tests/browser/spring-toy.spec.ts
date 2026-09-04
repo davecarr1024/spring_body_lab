@@ -72,6 +72,16 @@ test("the browser exposes a deterministic sheet-lift goal", async ({ page }) => 
   expect(pageErrors).toEqual([]);
 });
 
+test("the browser exposes a contact-proven block ram goal", async ({ page }) => {
+  const pageErrors = await openToy(page);
+  await page.getByRole("button", { name: "Load block ram" }).click();
+  await expect(page.getByRole("img", { name: "Block ram arena" })).toBeVisible();
+  await page.getByRole("button", { name: "Launch ram" }).click();
+  await expect(page.getByTestId("goal-status")).toHaveText("Ram contact achieved");
+  await expect(page.getByTestId("contact-count")).not.toHaveText("0");
+  expect(pageErrors).toEqual([]);
+});
+
 test("Reset restores the initial multi-body scene", async ({ page }) => {
   const pageErrors = await openToy(page);
   await page.getByRole("button", { name: "Step" }).click();
@@ -87,7 +97,7 @@ test("Play and Pause retain one accessible control set without page errors", asy
   const pageErrors = await openToy(page);
   await page.getByRole("button", { name: "Play" }).click();
   await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
-  await expect(page.getByRole("button")).toHaveCount(11);
+  await expect(page.getByRole("button")).toHaveCount(13);
   await page.getByRole("button", { name: "Pause" }).click();
   await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
   expect(pageErrors).toEqual([]);
