@@ -127,6 +127,11 @@ distance constraints. `driveTrailCar` maps held horizontal input to public
 wheel impulses. Its recipe deliberately keeps stiffness within the stable
 region for this explicit fixed timestep; a 600-step idle regression test
 proves finite, bounded state before the browser renders it.
+`trail.html` renders only the vehicle's chassis and soft collision-shape wheel
+faces—not particle/contact debug circles. Its SVG camera translates the world,
+uses slower cloud/hill layers for parallax, fills the heightfield below its
+ridge with a world-locked texture, and recomputes each wheel texture pattern
+from that body's centroid so materials move with their soft shape.
 Renderer-owned `skins.ts` maps body IDs to texture, scale, outline, and node
 appearance. It fills generated body faces as SVG polygons, so changing a skin
 does not alter world definitions or the spring model.

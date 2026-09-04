@@ -139,14 +139,22 @@ test("Trail Driver is a separate keyboard-controlled terrain page without debug 
   await page.goto("/trail.html");
   await expect(page).toHaveTitle("Trail Driver");
   await expect(page.getByRole("img", { name: "Trail Driver heightfield" })).toBeVisible();
-  await expect(page.locator("polygon.skin-face")).toHaveCount(2);
+  await expect(page.locator("polygon.trail-wheel")).toHaveCount(2);
+  await expect(page.locator("polygon.trail-ground")).toHaveCount(1);
+  await expect(page.locator("pattern[id^=wheel-skin-]")).toHaveCount(2);
   await expect(page.locator("circle.particle")).toHaveCount(0);
   await page.waitForTimeout(500);
-  await expect.poll(async () => await page.locator("polygon.skin-face").evaluateAll((faces) => faces.every((face) => !/NaN|Infinity/.test(face.getAttribute("points") ?? "")))).toBe(true);
+  await expect.poll(async () => await page.locator("polygon.trail-wheel").evaluateAll((faces) => faces.every((face) => !/NaN|Infinity/.test(face.getAttribute("points") ?? "")))).toBe(true);
+  const initialCloudOffset = await page.locator(".trail-clouds").getAttribute("transform");
+  const initialHillOffset = await page.locator(".trail-hills").getAttribute("transform");
   await page.keyboard.down("ArrowRight");
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(2000);
   await page.keyboard.up("ArrowRight");
-  await expect.poll(async () => await page.locator("polygon.skin-face").evaluateAll((faces) => faces.every((face) => !/NaN|Infinity/.test(face.getAttribute("points") ?? "")))).toBe(true);
+  await expect.poll(async () => await page.locator("polygon.trail-wheel").evaluateAll((faces) => faces.every((face) => !/NaN|Infinity/.test(face.getAttribute("points") ?? "")))).toBe(true);
+  await expect(page.getByTestId("trail-speed")).not.toHaveText("0");
+  await expect(page.getByTestId("trail-camera")).not.toHaveText("Camera 0");
+  expect(await page.locator(".trail-clouds").getAttribute("transform")).not.toBe(initialCloudOffset);
+  expect(await page.locator(".trail-hills").getAttribute("transform")).not.toBe(initialHillOffset);
   expect(errors).toEqual([]);
 });
 

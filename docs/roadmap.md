@@ -120,7 +120,7 @@ velocity repair, hard pin-to-wheel distance correction, invalid constraint
 diagnostics, and the existing trace/replay contract. These are reusable engine
 facts; the driving game remains the next presentation consumer.
 
-## Phase 12 — Stable Trail Driver presentation (in progress)
+## Phase 12 — Stable Trail Driver presentation (complete)
 
 **Deliverable:** a focused `trail.html` driving page whose vehicle remains
 numerically bounded from its initial condition, including while the browser
@@ -130,6 +130,8 @@ animation loop advances it continuously.
 asserts finite bounded position and velocity values, then proves sustained
 input reaches the ridge. The Playwright artifact test waits during idle and
 driving input and rejects rendered `NaN` or `Infinity` geometry.
+The same browser assertion verifies the terrain, two soft wheel faces,
+body-specific patterns, absence of debug circles, and responsive driving HUD.
 
 ## Deferred proposals
 
