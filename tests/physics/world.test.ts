@@ -102,6 +102,8 @@ test("distance constraints hold a wheel mount independently from springs", () =>
   assert.deepEqual(result.constraints[0].corrections[0], zero);
   assert.equal(result.constraints[0].corrections[1].x, -10);
   assert.equal(createWorldDefinition({ particles: [{ id: "a", position: zero, velocity: zero, inverseMass: 1 }], constraints: [{ id: "bad", a: "a", b: "a", restLength: 1, stiffness: 2 }] }).ok, false);
+  const coincident = createWorldDefinition({ particles: [{ id: "a", position: zero, velocity: zero, inverseMass: 1 }, { id: "b", position: zero, velocity: zero, inverseMass: 1 }], constraints: [{ id: "safe", a: "a", b: "b", restLength: 0, stiffness: 1 }] }).value;
+  assert.deepEqual(step(coincident, createInitialState(coincident)).constraints, [{ constraintId: "safe", extension: 0, corrections: [zero, zero] }]);
 });
 
 test("particle pairs separate deterministically and invalid contact structure is rejected", () => {
