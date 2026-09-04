@@ -25,8 +25,9 @@ Open `dist/index.html` after building.
 
 ## What works now
 
-- immutable vector, scalar-tolerance, segment, AABB, closest-point, and
-  classified-intersection APIs;
+- immutable typed vector/scalar-tolerance APIs; segments, AABBs, circles,
+  polygons, closest-point/distance/containment queries, and classified
+  intersections; plus deterministic Euler and RK4 scalar/Vec2 ODE traces;
 - validated immutable physics worlds with radius-aware particles, fixed
   segments, grid broad-phase candidates, and one fixed-step transition;
 - force/contact evidence, bounded correction, direct-neighbor exclusions,
@@ -45,6 +46,8 @@ layers compose correctly; strain and deterministic spring breakage are next.
   and next question.
 - [Technical description](docs/technical-description.md) maps the code,
   public interfaces, data flow, and verification boundaries.
+- [Math API](docs/math-api.md) describes the published 2D geometry and ODE
+  interface.
 - [Design and roadmap](docs/design.md) is the canonical design and phased
   path to the soft-body game.
 - [Roadmap](docs/roadmap.md) records current vertical-slice gates.

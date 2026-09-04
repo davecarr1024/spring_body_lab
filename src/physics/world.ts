@@ -163,15 +163,15 @@ export function step(definition: any, state: any, commands: ReadonlyArray<any> =
     const axialSpeed = dot(subtract(b.velocity, a.velocity), unit.value);
     const forceOnA = scale(unit.value, spring.stiffness * extension + spring.damping * axialSpeed);
     const forceOnB = negate(forceOnA);
-    forces.set(a.id, add(forces.get(a.id), forceOnA));
-    forces.set(b.id, add(forces.get(b.id), forceOnB));
+    forces.set(a.id, add(forces.get(a.id) as any, forceOnA));
+    forces.set(b.id, add(forces.get(b.id) as any, forceOnB));
     springForces.push(Object.freeze({ springId: spring.id, kind: "force", extension, forceOnA, forceOnB }));
   }
   const particles = state.particles.map((stateParticle) => {
     const definitionParticle = byId.get(stateParticle.id);
     const impulse = validCommands.reduce((total, command) => add(total, commandVelocityDelta(command, definitionParticle)), zero);
     if (definitionParticle.inverseMass === 0) return Object.freeze({ ...stateParticle });
-    const velocity = add(add(stateParticle.velocity, scale(forces.get(stateParticle.id), definitionParticle.inverseMass * definition.dt)), impulse);
+    const velocity = add(add(stateParticle.velocity, scale(forces.get(stateParticle.id) as any, definitionParticle.inverseMass * definition.dt)), impulse);
     return Object.freeze({ id: stateParticle.id, velocity, position: add(stateParticle.position, scale(velocity, definition.dt)) });
   });
   const contacts = [];

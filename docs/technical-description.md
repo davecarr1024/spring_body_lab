@@ -36,6 +36,14 @@ same tolerance contract. Its intersection operation returns one of
 whether it is an endpoint touch. This makes contact code a future consumer of
 geometry evidence rather than the owner of private segment arithmetic.
 
+The public math entry point also exports immutable `Circle2` and polygon
+queries (containment, signed area, bounds, closest points, and distances) plus
+typed scalar/vector operations such as interpolation, rotation, rejection, and
+reflection. `ode.ts` supplies explicit Euler and classical RK4 for finite
+scalar or `Vec2` states. Each solver returns an immutable time/state trace and
+evaluation count; malformed settings, shape changes, and non-finite derivative
+results return structured diagnostics rather than contaminating a simulation.
+
 ## Physics API
 
 `createWorldDefinition` validates a world before it is usable. A successful

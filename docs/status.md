@@ -15,7 +15,7 @@ browser controls → deterministic game action → physics StepResult → math v
 
 | Layer | Current capability | Evidence |
 | --- | --- | --- |
-| Math/geometry library | immutable vectors, validated absolute/relative tolerance values, segments, AABBs, closest point, orientation, classified intersection | unit tests cover ordinary, boundary, tolerance, overlap, and degenerate cases |
+| Math/geometry library | typed immutable vectors/scalars, segments, AABBs, circles, polygon containment, classified intersections, and Euler/RK4 scalar/Vec2 ODE traces | unit tests cover ordinary, boundary, tolerance, overlap, degeneracy, numerical order, and invalid derivative cases |
 | Physics library | radius-aware particles, fixed segments, bounded correction/velocity repair, grid broad phase, direct-neighbor exclusions, immutable trace/replay | tests prove diagnostics, pin invariance, spring forces, fixed and pair contacts, exclusions, and replay |
 | Game | deterministic recipes for two two-by-two soft bodies in a fixed arena | test proves recipe composition and deterministic command result |
 | Browser | Step, Play, Nudge amber/blue, and Reset controls rendering state, springs, contacts, and normals | five Playwright Chromium smoke tests against the built artifact, including stable Play/Pause controls |
