@@ -141,9 +141,12 @@ test("Trail Driver is a separate keyboard-controlled terrain page without debug 
   await expect(page.getByRole("img", { name: "Trail Driver heightfield" })).toBeVisible();
   await expect(page.locator("polygon.skin-face")).toHaveCount(2);
   await expect(page.locator("circle.particle")).toHaveCount(0);
+  await page.waitForTimeout(500);
+  await expect.poll(async () => await page.locator("polygon.skin-face").evaluateAll((faces) => faces.every((face) => !/NaN|Infinity/.test(face.getAttribute("points") ?? "")))).toBe(true);
   await page.keyboard.down("ArrowRight");
-  await page.waitForTimeout(100);
+  await page.waitForTimeout(500);
   await page.keyboard.up("ArrowRight");
+  await expect.poll(async () => await page.locator("polygon.skin-face").evaluateAll((faces) => faces.every((face) => !/NaN|Infinity/.test(face.getAttribute("points") ?? "")))).toBe(true);
   expect(errors).toEqual([]);
 });
 

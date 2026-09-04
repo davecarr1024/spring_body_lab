@@ -120,6 +120,17 @@ velocity repair, hard pin-to-wheel distance correction, invalid constraint
 diagnostics, and the existing trace/replay contract. These are reusable engine
 facts; the driving game remains the next presentation consumer.
 
+## Phase 12 — Stable Trail Driver presentation (in progress)
+
+**Deliverable:** a focused `trail.html` driving page whose vehicle remains
+numerically bounded from its initial condition, including while the browser
+animation loop advances it continuously.
+
+**Evidence:** the headless game suite advances an idle vehicle for 600 steps,
+asserts finite bounded position and velocity values, then proves sustained
+input reaches the ridge. The Playwright artifact test waits during idle and
+driving input and rejects rendered `NaN` or `Infinity` geometry.
+
 ## Deferred proposals
 
 3D, fluid/shader work, rich fracture, continuous collision, alternative

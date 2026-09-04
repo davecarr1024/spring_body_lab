@@ -127,3 +127,18 @@ test("Trail Driver composes heightfield terrain, a stiff chassis, soft wheels, a
   assert.deepEqual(driveTrailCar(createTrailDriver()), driven);
   assert.equal(driveTrailCar(createBreachRun()).result, undefined);
 });
+
+test("Trail Driver remains bounded from its initial condition and reaches its ridge under sustained input", () => {
+  let idle = createTrailDriver();
+  for (let step = 0; step < 600; step += 1) idle = driveTrailCar(idle, 0).game;
+  for (const particle of idle.state.particles) {
+    assert.ok(Number.isFinite(particle.position.x));
+    assert.ok(Number.isFinite(particle.position.y));
+    assert.ok(Number.isFinite(particle.velocity.x));
+    assert.ok(Number.isFinite(particle.velocity.y));
+    assert.ok(Math.max(Math.abs(particle.position.x), Math.abs(particle.position.y), Math.abs(particle.velocity.x), Math.abs(particle.velocity.y)) < 1_000);
+  }
+  let driving = createTrailDriver();
+  for (let step = 0; step < 600; step += 1) driving = driveTrailCar(driving, 1).game;
+  assert.equal(driving.goal.achieved, true);
+});

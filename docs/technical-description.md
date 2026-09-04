@@ -121,6 +121,12 @@ direction to immutable impulses across the player particles. The browser holds
 keyboard state or derives a pointer course, then repeatedly invokes that game
 action during real-time animation; it never writes particle state directly.
 `mossyard.html` is a focused entry point that boots this scene running.
+`createTrailDriver` composes a bounded-stiffness triangular chassis, two
+deformable wheel grids, a heightfield, frictional contact, and two axle
+distance constraints. `driveTrailCar` maps held horizontal input to public
+wheel impulses. Its recipe deliberately keeps stiffness within the stable
+region for this explicit fixed timestep; a 600-step idle regression test
+proves finite, bounded state before the browser renders it.
 Renderer-owned `skins.ts` maps body IDs to texture, scale, outline, and node
 appearance. It fills generated body faces as SVG polygons, so changing a skin
 does not alter world definitions or the spring model.
@@ -141,7 +147,7 @@ see [browser-testing.md](browser-testing.md).
 
 `npm run typecheck` validates TypeScript source. `npm test` runs tests split by math, physics, and game layer. `npm run
 coverage` runs the same suite with Node's coverage report. `npm run
-test:browser` runs the twelve built-artifact Playwright smoke tests. `npm run
+test:browser` runs the thirteen built-artifact Playwright smoke tests. `npm run
 check` runs coverage then the browser suite. The current headless
 production modules have 100% line/function coverage; branch coverage is
 reported and should increase as validation/replay cases are added.

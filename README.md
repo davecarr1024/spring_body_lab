@@ -5,11 +5,10 @@ tested 2D math/geometry library, a headless physics library, then a browser
 game that consumes them. It asks how small explicit rules can create deformable
 worlds that remain fun, inspectable, and explainable.
 
-The current vertical slice is **Mossyard Courier**, a standalone real-time
-soft-body delivery game. Steer a textured moss courier to the moon gate with
-WASD/arrow keys or a mouse course; its browser controls issue deterministic
-game commands while physics returns the springs, contacts, corrections,
-fracture, and state the browser displays.
+The current vertical slice is **Trail Driver**, a standalone real-time
+soft-wheel driving game. Drive a stiff-chassis vehicle across a heightfield
+with arrow keys; its browser controls issue deterministic game commands while
+physics returns the springs, contacts, constraints, and state the browser displays.
 
 ## Run locally
 
@@ -23,7 +22,7 @@ npm run check
 ```
 
 Open `dist/index.html` after building.
-Open `dist/mossyard.html` for the focused playable demo.
+Open `dist/trail.html` for the focused playable demo.
 
 ## What works now
 
@@ -48,10 +47,12 @@ Open `dist/mossyard.html` for the focused playable demo.
   and breaks the goal seam in a multi-body arena.
 - Mossyard Courier, a standalone live keyboard/mouse delivery mission with
   renderer-owned texture skins for generated soft-body faces.
+- Trail Driver, a standalone heightfield driving mission with a stable
+  explicit-Euler chassis, soft wheels, frictional terrain, and axle mounts.
 
-This is still a compact soft-body game proof, not a general engine. Phases 1–8
-establish the reusable layers; Breach Run proves that those layers can support
-a composite player goal without speculative solver expansion.
+This is still a compact soft-body game proof, not a general engine. Phases 1–11
+establish the reusable layers; Trail Driver proves that those layers can support
+a stable driving goal without speculative solver expansion.
 
 ## Read deeper
 
@@ -74,6 +75,6 @@ a composite player goal without speculative solver expansion.
 
 ## Next small step
 
-Phases 1–9 are complete; Mossyard Courier is the first game-presentation
-extension. Future features begin only from a concrete scene need and a fresh
+Phases 1–11 are complete; Trail Driver is the current game-presentation
+consumer. Future features begin only from a concrete scene need and a fresh
 design, rather than expanding the solver speculatively.

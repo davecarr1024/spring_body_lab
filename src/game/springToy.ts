@@ -224,13 +224,15 @@ export function createTrailDriver() {
     { id: "chassis:roof", position: vec2(148, 145), velocity: zero, inverseMass: 1, radius: 7 },
   ];
   const definition = createWorldDefinition({ gravity: vec2(0, 140), dt: 1 / 60, contact: { tolerance: 1e-6, maxCorrection: 12, restitution: 0, friction: .82, iterations: 3 }, particles: [...chassis, ...frontWheel.value.particles, ...rearWheel.value.particles], springs: [
-    { id: "frame:base", a: "chassis:rear", b: "chassis:front", restLength: 75, stiffness: 900, damping: 40 },
-    { id: "frame:left", a: "chassis:rear", b: "chassis:roof", restLength: 53, stiffness: 900, damping: 40 },
-    { id: "frame:right", a: "chassis:front", b: "chassis:roof", restLength: 49.5, stiffness: 900, damping: 40 },
+    // This scene uses an explicit integrator: the chassis stays firm at this
+    // timestep without injecting energy into the wheel-mount constraints.
+    { id: "frame:base", a: "chassis:rear", b: "chassis:front", restLength: 75, stiffness: 140, damping: 18 },
+    { id: "frame:left", a: "chassis:rear", b: "chassis:roof", restLength: 53, stiffness: 140, damping: 18 },
+    { id: "frame:right", a: "chassis:front", b: "chassis:roof", restLength: 49.5, stiffness: 140, damping: 18 },
     ...frontWheel.value.springs, ...rearWheel.value.springs,
   ], constraints: [
-    { id: "front-axle", a: "chassis:front", b: "front-wheel:p:0:0", restLength: 32, stiffness: .7 },
-    { id: "rear-axle", a: "chassis:rear", b: "rear-wheel:p:0:0", restLength: 32, stiffness: .7 },
+    { id: "front-axle", a: "chassis:front", b: "front-wheel:p:0:0", restLength: 32, stiffness: .25 },
+    { id: "rear-axle", a: "chassis:rear", b: "rear-wheel:p:0:0", restLength: 32, stiffness: .25 },
   ], fixedSegments: terrain.value.segments });
   if (!definition.ok) throw new Error("The built-in Trail Driver world must be valid.");
   const trace = createTrace(definition.value);
@@ -240,5 +242,5 @@ export function createTrailDriver() {
 /** Drives both soft wheels through public impulse commands. */
 export function driveTrailCar(game: any, direction = 1) {
   if (game.scene !== "trail-driver") return Object.freeze({ game, result: undefined });
-  return advanceGame(game, game.definition.particles.filter((particle: any) => particle.id.includes("wheel:")).map((particle: any) => Object.freeze({ kind: "applyImpulse", particleId: particle.id, impulse: vec2(direction * 3, 0) })));
+  return advanceGame(game, game.definition.particles.filter((particle: any) => particle.id.includes("wheel:")).map((particle: any) => Object.freeze({ kind: "applyImpulse", particleId: particle.id, impulse: vec2(direction * 10, 0) })));
 }
