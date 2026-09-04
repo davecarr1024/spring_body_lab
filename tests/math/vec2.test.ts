@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { add, approximatelyEqual, createTolerance, cross, defaultTolerance, diagnostic, distance, dot, isFiniteNumber, isFiniteVec2, isNearZero, length, normalize, perpendicular, project, scale, subtract, vec2, zero } from "../../src/math/index.mjs";
+import { add, approximatelyEqual, createTolerance, cross, defaultTolerance, diagnostic, distance, dot, isFiniteNumber, isFiniteVec2, isNearZero, length, normalize, perpendicular, project, scale, subtract, vec2, zero } from "../../src/math/index.js";
 
 test("Vec2 values are finite immutable values with composable arithmetic", () => {
   const left = vec2(3, 4);

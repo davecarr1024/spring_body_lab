@@ -1,0 +1,23 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { createGridBody } from "../../src/physics/index.js";
+import { vec2, zero } from "../../src/math/index.js";
+
+test("grid recipes create deterministic particles, structural and diagonal springs, and faces", () => {
+  const recipe = { id: "sheet", rows: 2, columns: 3, origin: vec2(10, 20), spacing: 5, velocity: zero };
+  const first = createGridBody(recipe);
+  const second = createGridBody(recipe);
+  assert.equal(first.ok, true);
+  assert.equal(first.value.particles.length, 6);
+  assert.equal(first.value.springs.filter((spring) => spring.kind === "structural").length, 7);
+  assert.equal(first.value.springs.filter((spring) => spring.kind === "diagonal").length, 4);
+  assert.equal(first.value.faces.length, 2);
+  assert.deepEqual(first, second);
+  assert.equal(Object.isFrozen(first.value.faces[0].particleIds), true);
+});
+
+test("grid recipes classify invalid topology and numeric settings", () => {
+  assert.equal(createGridBody({ id: "", rows: 1, columns: 1, origin: zero, spacing: 0 }).ok, false);
+  assert.equal(createGridBody({ rows: 2, columns: 2, origin: { x: Infinity, y: 0 }, spacing: 1 }).ok, false);
+  assert.equal(createGridBody({ rows: 2, columns: 2, origin: zero, spacing: 1, inverseMass: -1, radius: -1, stiffness: -1, damping: -1 }).ok, false);
+});

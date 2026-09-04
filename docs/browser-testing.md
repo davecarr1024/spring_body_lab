@@ -1,13 +1,13 @@
 # Browser Testing Plan
 
-Phase 3 exits only when the built browser artifact has repeatable automated
-evidence. The project uses Playwright Test because it can start a local
+The browser boundary is complete only when its built artifact has repeatable
+automated evidence. The project uses Playwright Test because it can start a local
 static server, drive a real Chromium page, and retain screenshots/traces when a
 test fails.
 
 ## Implemented setup
 
-`@playwright/test` is a development dependency. `playwright.config.mjs`:
+`@playwright/test`, TypeScript, and the TS test runner are development dependencies. `playwright.config.mjs`:
 
 - runs `npm run build` before browser tests;
 - serves `dist/` on a local fixed test URL through Playwright's `webServer`;
@@ -21,16 +21,16 @@ The browser runner is a consumer of the static artifact. It must not import
 private source modules or use page evaluation to calculate expected physics.
 Expected model values belong in headless math/physics/game tests.
 
-## First smoke suite
+## Multi-body smoke suite
 
-The first specifications cover the public evidence boundary:
+The specifications cover the public evidence boundary:
 
 | Interaction | Assertion |
 | --- | --- |
-| Load the page | title, heading, spring SVG, controls, and step `0` are visible |
-| Step | the displayed step becomes `1` and a returned force/extension record appears |
-| Kick | the displayed bob state changes through the game command path |
-| Reset | displayed step and bob state return to the initial scene |
+| Load the page | title, heading, multi-body SVG, controls, two bodies, eight particles, and step `0` are visible |
+| Step | the displayed step becomes `1` and a returned contact count appears |
+| Nudge | a named body advances through the game command path |
+| Reset | displayed step, body count, and contact count return to the initial scene |
 | Play/pause | visible control state changes without browser errors or duplicate controls |
 
 Use role/name locators for controls and accessible text/labels for evidence.
@@ -40,7 +40,8 @@ the sole proof of physics behavior.
 ## Artifacts and responsibilities
 
 On failure, Playwright retains trace and screenshot artifacts in ignored local
-result directories; CI should upload the same artifacts when it is added. A
+result directories. CI runs the same `npm run check` gate before publishing the
+static artifact to GitHub Pages. A
 browser failure diagnoses the browser/game boundary; it does not loosen a
 headless physics assertion. New overlays and controls require one smoke test
 that proves they display an existing public record rather than browser-derived

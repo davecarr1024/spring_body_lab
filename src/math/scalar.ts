@@ -9,7 +9,7 @@ export function createTolerance({ absolute = 1e-9, relative = 1e-9 } = {}) {
   return Object.freeze({ ok: true, value: Object.freeze({ absolute, relative }) });
 }
 
-export const defaultTolerance = createTolerance().value;
+export const defaultTolerance = (createTolerance() as any).value;
 
 export function approximatelyEqual(left, right, tolerance = defaultTolerance) {
   return Math.abs(left - right) <= tolerance.absolute + tolerance.relative * Math.max(Math.abs(left), Math.abs(right));

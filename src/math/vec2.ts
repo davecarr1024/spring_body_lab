@@ -1,4 +1,4 @@
-import { defaultTolerance, isFiniteNumber, isNearZero } from "./scalar.mjs";
+import { defaultTolerance, isFiniteNumber, isNearZero } from "./scalar.js";
 
 export const vec2 = (x, y) => Object.freeze({ x, y });
 export const zero = vec2(0, 0);

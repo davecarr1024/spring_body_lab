@@ -35,7 +35,7 @@ evidence, and retain traces/screenshots on failure. The suite found and fixed
 an animation re-render that made Pause unstable, proving the browser boundary
 rather than merely loading the page.
 
-## Phase 4 — Fixed geometry contact
+## Phase 4 — Fixed geometry contact (complete)
 
 **Deliverable:** particle/plane, then particle/fixed-segment contact using the
 geometry library, with bounded correction records.
@@ -43,7 +43,7 @@ geometry library, with bounded correction records.
 **Evidence:** no persistent penetration beyond declared tolerance, visible
 normal/correction records, and bounded bounce/rest cases.
 
-## Phase 5 — Generated soft bodies
+## Phase 5 — Generated soft bodies (complete)
 
 **Deliverable:** deterministic rectangular/triangular-grid body recipes,
 validated topology, boundary derivation, and a hanging sheet scene.
@@ -51,13 +51,14 @@ validated topology, boundary derivation, and a hanging sheet scene.
 **Evidence:** identical recipes/seeds reproduce IDs, geometry, faces, edges,
 and trace; structural and diagonal springs remain independently inspectable.
 
-## Phase 6 — Multiple bodies and self-collision
+## Phase 6 — Multiple bodies and self-collision (complete)
 
 **Deliverable:** particle-pair contacts, uniform-grid broad phase, and explicit
 topology exclusions.
 
-**Evidence:** separate bodies do not retain deep overlap; adjacent particles do
-not explode; selected particles report candidates, exclusions, and contacts.
+**Evidence:** separate bodies do not retain deep overlap; direct spring
+neighbors are excluded from pair contact; a deterministic grid broad phase
+feeds the narrow phase; and the browser renders returned contact evidence.
 
 ## Phase 7 — Strain and fracture
 

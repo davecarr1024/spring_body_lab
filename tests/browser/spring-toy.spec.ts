@@ -7,43 +7,41 @@ async function openToy(page) {
   return pageErrors;
 }
 
-test("the built browser artifact presents the initial spring toy", async ({ page }) => {
+test("the built browser artifact presents the initial multiple-body lab", async ({ page }) => {
   const pageErrors = await openToy(page);
   await expect(page).toHaveTitle("Spring Body Lab");
-  await expect(page.getByRole("heading", { name: "A game built from evidence." })).toBeVisible();
-  await expect(page.getByRole("img", { name: "Two particle spring scene" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Deformable bodies, visible causes." })).toBeVisible();
+  await expect(page.getByRole("img", { name: "Multiple soft bodies in a fixed contact arena" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Step" })).toBeVisible();
   await expect(page.getByTestId("step-value")).toHaveText("0");
-  await expect(page.getByTestId("spring-extension")).toHaveText("initial");
+  await expect(page.getByTestId("body-count")).toHaveText("2");
+  await expect(page.getByTestId("particle-count")).toHaveText("8");
   expect(pageErrors).toEqual([]);
 });
 
-test("Step renders the returned physics evidence", async ({ page }) => {
+test("Step renders the returned physics contact evidence", async ({ page }) => {
   const pageErrors = await openToy(page);
   await page.getByRole("button", { name: "Step" }).click();
   await expect(page.getByTestId("step-value")).toHaveText("1");
-  await expect(page.getByTestId("spring-extension")).not.toHaveText("initial");
-  await expect(page.getByTestId("force-on-anchor")).not.toHaveText("initial");
+  await expect(page.getByTestId("contact-count")).toHaveText(/\d+/);
   expect(pageErrors).toEqual([]);
 });
 
-test("Kick changes the displayed bob state through the game command", async ({ page }) => {
+test("body nudges advance the game command path", async ({ page }) => {
   const pageErrors = await openToy(page);
-  const initialPosition = await page.getByTestId("bob-position").textContent();
-  await page.getByRole("button", { name: "Kick" }).click();
+  await page.getByRole("button", { name: "Nudge amber" }).click();
   await expect(page.getByTestId("step-value")).toHaveText("1");
-  await expect(page.getByTestId("bob-position")).not.toHaveText(initialPosition ?? "");
   expect(pageErrors).toEqual([]);
 });
 
-test("Reset restores the initial public scene", async ({ page }) => {
+test("Reset restores the initial multi-body scene", async ({ page }) => {
   const pageErrors = await openToy(page);
   await page.getByRole("button", { name: "Step" }).click();
-  await page.getByRole("button", { name: "Kick" }).click();
+  await page.getByRole("button", { name: "Nudge blue" }).click();
   await page.getByRole("button", { name: "Reset" }).click();
   await expect(page.getByTestId("step-value")).toHaveText("0");
-  await expect(page.getByTestId("bob-position")).toHaveText("300.00, 190.00");
-  await expect(page.getByTestId("spring-extension")).toHaveText("initial");
+  await expect(page.getByTestId("body-count")).toHaveText("2");
+  await expect(page.getByTestId("contact-count")).toHaveText("0");
   expect(pageErrors).toEqual([]);
 });
 
@@ -51,7 +49,7 @@ test("Play and Pause retain one accessible control set without page errors", asy
   const pageErrors = await openToy(page);
   await page.getByRole("button", { name: "Play" }).click();
   await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
-  await expect(page.getByRole("button")).toHaveCount(4);
+  await expect(page.getByRole("button")).toHaveCount(5);
   await page.getByRole("button", { name: "Pause" }).click();
   await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
   expect(pageErrors).toEqual([]);

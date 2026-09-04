@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { vec2 } from "../../src/math/index.mjs";
-import { advanceGame, createSpringToy } from "../../src/game/index.mjs";
+import { vec2 } from "../../src/math/index.js";
+import { advanceGame, createMultiBodyLab, createSpringToy } from "../../src/game/index.js";
 
 test("the game slice consumes a valid physics world and records its command", () => {
   const game = createSpringToy();
@@ -19,4 +19,14 @@ test("identical game commands produce an identical deterministic step", () => {
   const second = advanceGame(createSpringToy(), [command]);
   assert.deepEqual(first.result, second.result);
   assert.deepEqual(first.game.trace, second.game.trace);
+});
+
+test("the multi-body lab combines deterministic grid recipes with fixed geometry", () => {
+  const game = createMultiBodyLab();
+  assert.equal(game.bodies.length, 2);
+  assert.equal(game.definition.particles.length, 8);
+  assert.equal(game.definition.fixedSegments.length, 3);
+  assert.equal(game.definition.springs.length, 12);
+  const command = { kind: "applyImpulse", particleId: "amber:p:0:0", impulse: vec2(25, -10) };
+  assert.deepEqual(advanceGame(game, [command]), advanceGame(createMultiBodyLab(), [command]));
 });

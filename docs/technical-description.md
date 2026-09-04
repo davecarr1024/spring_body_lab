@@ -5,13 +5,13 @@
 The implementation follows the canonical design's one-way dependency graph:
 
 ```text
-src/browser/app.mjs
+src/browser/app.ts
         │
-src/game/springToy.mjs
+src/game/springToy.ts
         │
-src/physics/world.mjs
+src/physics/world.ts
         │
-src/math/{scalar,vec2,geometry}.mjs
+src/math/{scalar,vec2,geometry}.ts
 ```
 
 `math` has no project dependency. `physics` depends only on math. `game`
@@ -22,14 +22,14 @@ on a test, a renderer, or an ambient clock/random source.
 
 ## Math and geometry API
 
-`scalar.mjs` owns validated immutable absolute/relative tolerance values,
+`scalar.ts` owns validated immutable absolute/relative tolerance values,
 finite-number checks, scaled approximate comparison, near-zero classification,
-and immutable diagnostics. `vec2.mjs` exports immutable vector values and pure
+and immutable diagnostics. `vec2.ts` exports immutable vector values and pure
 arithmetic, dot/cross, length/distance, normalization, and projection.
 Normalization and projection return tagged `unit`/`point` or `degenerate`
 results and accept the shared tolerance contract.
 
-`geometry.mjs` validates `Segment2` and `Aabb2` values and returns structured
+`geometry.ts` validates `Segment2` and `Aabb2` values and returns structured
 success/diagnostic results. Closest-point and intersection queries accept the
 same tolerance contract. Its intersection operation returns one of
 `none`, `point`, `overlap`, or `degenerate`; a point includes its witness and
@@ -39,10 +39,11 @@ geometry evidence rather than the owner of private segment arithmetic.
 ## Physics API
 
 `createWorldDefinition` validates a world before it is usable. A successful
-definition contains frozen particle/spring declarations, gravity, and fixed
+definition contains frozen particle/spring/fixed-segment declarations, gravity,
+contact settings, and fixed
 timestep; failure contains frozen, context-rich diagnostics. A particle has a
-stable string ID, `Vec2` position/velocity, and non-negative inverse mass.
-Zero inverse mass is a pin. Springs have distinct existing endpoints and
+stable string ID, `Vec2` position/velocity, non-negative inverse mass, and a
+non-negative collision radius. Zero inverse mass is a pin. Springs have distinct existing endpoints and
 finite non-negative rest length, stiffness, and damping.
 
 `createInitialState(definition)` creates a separate immutable runtime state.
@@ -51,8 +52,7 @@ finite non-negative rest length, stiffness, and damping.
 - next `WorldState` and incremented step index;
 - one spring force record per intact spring, including extension and the
   equal-and-opposite endpoint forces, or an explicit `degenerate` record;
-- empty diagnostics/events collections reserved for later constraints,
-  contacts, and fracture.
+- immutable contact records plus diagnostics/events collections.
 
 The current integration is semi-implicit Euler. Forces accumulate as gravity
 and Hooke-plus-axial-damping spring force. The force on `b` is calculated as
@@ -67,16 +67,21 @@ pre-step index and returned `StepResult`. `replayTrace` starts at the retained
 initial state and reconstructs the complete trace from those records. This is
 in-memory replay evidence; serialization/persistence is deliberately deferred.
 
+After integration, fixed geometry uses public point-to-segment distance
+evidence. Particle-pair candidates come from a deterministic uniform grid;
+direct spring neighbors are excluded before narrow phase. Contact records retain
+normal, penetration, bounded correction, and velocity repair/impulse.
+
 ## Game and browser
 
-`createSpringToy` supplies one named scene with a pin, bob, gravity, and a
-spring. `advanceGame` preserves the definition, delegates to `step`, and
-records command facts. The browser has no force/integration implementation:
-its buttons emit `applyImpulse` or no command, then render the returned state
-and spring force record.
+`createSpringToy` remains a small compatibility probe. `createMultiBodyLab`
+builds two deterministic grid bodies in a floor-and-wall arena. `advanceGame`
+preserves the definition, delegates to `step`, and records command facts. The
+browser emits `applyImpulse` or no command, then renders returned state,
+springs, contacts, and normals.
 
-`scripts/build.mjs` is deliberately thin build glue. It copies `src/` to
-`dist/src/` and rewrites the static page paths. `dist/` is generated and not
+`scripts/build.mjs` invokes TypeScript into `dist/src/`, copies the browser
+stylesheet, and writes the static page. `dist/` is generated and not
 source-controlled. Browser source is excluded from headless coverage because
 it is platform glue; the required evidence for it is a successful static build
 and, at Phase 3 exit, Playwright browser smoke tests. `playwright.config.mjs`
@@ -86,7 +91,7 @@ see [browser-testing.md](browser-testing.md).
 
 ## Verification contract
 
-`npm test` runs tests split by math, physics, and game layer. `npm run
+`npm run typecheck` validates TypeScript source. `npm test` runs tests split by math, physics, and game layer. `npm run
 coverage` runs the same suite with Node's coverage report. `npm run
 test:browser` runs the five built-artifact Playwright smoke tests. `npm run
 check` runs coverage then the browser suite. The current headless
@@ -95,7 +100,8 @@ reported and should increase as validation/replay cases are added.
 
 The library tests prove public behavior rather than source-only output:
 vectors/geometry classify boundaries, invalid worlds report diagnostics, a
-spring's force is equal/opposite and zero at rest, pins remain fixed, impulses
-pass through the game/physics boundary, and a degenerate spring remains an
-explicit record. Browser tests prove initial render, Step/Kick/Reset, and stable
-Play/Pause controls without duplicating the physics model in page code.
+spring's force is equal/opposite and zero at rest, fixed/pair contacts are
+bounded and inspectable, direct neighbors are excluded, and a degenerate spring
+remains an explicit record. Browser tests prove the initial multi-body arena,
+Step/Nudge/Reset, and stable Play/Pause controls without duplicating the physics
+model in page code.

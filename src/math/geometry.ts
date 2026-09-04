@@ -1,5 +1,5 @@
-import { approximatelyEqual, defaultTolerance, diagnostic, isFiniteNumber, isNearZero } from "./scalar.mjs";
-import { add, cross, distance, dot, isFiniteVec2, lengthSquared, scale, subtract, vec2 } from "./vec2.mjs";
+import { approximatelyEqual, defaultTolerance, diagnostic, isFiniteNumber, isNearZero } from "./scalar.js";
+import { add, cross, distance, dot, isFiniteVec2, lengthSquared, scale, subtract, vec2 } from "./vec2.js";
 
 export function segment(start, end) {
   if (!isFiniteVec2(start) || !isFiniteVec2(end)) {

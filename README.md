@@ -1,19 +1,21 @@
 # Spring Body Lab
 
-Spring Body Lab is a deterministic soft-body game project built in layers: a
+Spring Body Lab is a deterministic TypeScript soft-body game project built in layers: a
 tested 2D math/geometry library, a headless physics library, then a browser
 game that consumes them. It asks how small explicit rules can create deformable
 worlds that remain fun, inspectable, and explainable.
 
-The current vertical slice is a two-particle spring toy. Its browser controls
-issue deterministic game commands; the game delegates to physics; physics uses
-the public math layer and returns the forces and state the browser displays.
+The current vertical slice is an interactable arena containing two generated
+soft bodies. Its browser controls issue deterministic game commands; the game
+delegates to physics; physics uses the public math layer and returns the
+springs, contacts, corrections, and state the browser displays.
 
 ## Run locally
 
 ```bash
 npm test
 npm run coverage
+npm run typecheck
 npm run test:browser
 npm run build
 npm run check
@@ -25,13 +27,17 @@ Open `dist/index.html` after building.
 
 - immutable vector, scalar-tolerance, segment, AABB, closest-point, and
   classified-intersection APIs;
-- validated immutable physics worlds with one fixed-step spring transition;
-- force evidence, pin handling, command-driven impulses, and deterministic
-  in-memory trace/replay;
-- a headless game slice plus a browser view of its returned physics evidence.
+- validated immutable physics worlds with radius-aware particles, fixed
+  segments, grid broad-phase candidates, and one fixed-step transition;
+- force/contact evidence, bounded correction, direct-neighbor exclusions,
+  command-driven impulses, and deterministic in-memory trace/replay;
+- deterministic rectangular soft-body recipes with structural/diagonal springs
+  and faces; and
+- an interactable browser arena with two bodies, fixed walls/floor, Nudge,
+  Step, Play/Pause, Reset, and returned contact-normal rendering.
 
-This is not yet collision or a complete soft-body game. Phases 1–3 prove the
-layers compose correctly; fixed geometry contact is next.
+This is not yet fracture or a complete soft-body game. Phases 1–6 prove the
+layers compose correctly; strain and deterministic spring breakage are next.
 
 ## Read deeper
 
@@ -50,5 +56,5 @@ layers compose correctly; fixed geometry contact is next.
 
 ## Next small step
 
-Introduce one fixed geometry contact through the public math API, with a
-bounded correction record before expanding the browser scene.
+Add local strain telemetry and one deterministic spring-break event, while
+keeping the multi-body arena and its replay evidence stable.

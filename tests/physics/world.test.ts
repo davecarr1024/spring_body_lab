@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { vec2, zero } from "../../src/math/index.mjs";
-import { appendTraceStep, createInitialState, createTrace, createWorldDefinition, replayTrace, step } from "../../src/physics/index.mjs";
+import { vec2, zero } from "../../src/math/index.js";
+import { appendTraceStep, createInitialState, createTrace, createWorldDefinition, replayTrace, step } from "../../src/physics/index.js";
 
 function world(overrides = {}) {
   return createWorldDefinition({ gravity: zero, dt: .1, particles: [
@@ -56,4 +56,62 @@ test("traces retain immutable step-indexed commands and replay their evidence", 
   assert.equal(Object.isFrozen(trace.trace.entries[0].commands[0]), true);
   assert.deepEqual(trace.trace.entries[0].commands[0].impulse, vec2(2, 0));
   assert.deepEqual(replayTrace(trace.trace), trace.trace);
+});
+
+test("fixed segments return bounded correction and velocity evidence", () => {
+  const definition = createWorldDefinition({
+    gravity: zero, dt: .1, contact: { tolerance: 1e-6, maxCorrection: 10, restitution: .2, iterations: 1 },
+    particles: [{ id: "ball", position: vec2(5, 96), velocity: vec2(0, 10), inverseMass: 1, radius: 10 }],
+    springs: [], fixedSegments: [{ id: "floor", start: vec2(0, 100), end: vec2(100, 100) }],
+  }).value;
+  const result = step(definition, createInitialState(definition));
+  const contact = result.contacts[0];
+  assert.equal(contact.kind, "particle_segment");
+  assert.equal(contact.segmentId, "floor");
+  assert.deepEqual(contact.normal, vec2(0, -1));
+  assert.equal(contact.penetration, 7);
+  assert.deepEqual(contact.correction, vec2(0, -7));
+  assert.equal(result.state.particles[0].position.y, 90);
+  assert.equal(result.state.particles[0].velocity.y, -2);
+  assert.equal(Object.isFrozen(contact), true);
+});
+
+test("particle pairs separate deterministically and invalid contact structure is rejected", () => {
+  const definition = createWorldDefinition({
+    gravity: zero, dt: .1, contact: { tolerance: 1e-6, maxCorrection: 10, restitution: 0, iterations: 1 },
+    particles: [
+      { id: "left", position: vec2(0, 0), velocity: vec2(10, 0), inverseMass: 1, radius: 12 },
+      { id: "right", position: vec2(20, 0), velocity: vec2(-10, 0), inverseMass: 1, radius: 12 },
+    ], springs: [],
+  }).value;
+  const result = step(definition, createInitialState(definition));
+  assert.equal(result.contacts[0].kind, "particle_particle");
+  assert.equal(result.contacts[0].penetration, 6);
+  assert.deepEqual(result.state.particles.map((particle) => particle.position.x), [-2, 22]);
+  assert.deepEqual(result.state.particles.map((particle) => particle.velocity.x), [0, 0]);
+  assert.equal(createWorldDefinition({ particles: [{ id: "bad", position: zero, velocity: zero, inverseMass: 1, radius: -1 }], contact: { tolerance: -1 } }).ok, false);
+  assert.equal(createWorldDefinition({ particles: [{ id: "one", position: zero, velocity: zero, inverseMass: 1 }], fixedSegments: [{ id: "bad", start: zero, end: { x: Infinity, y: 0 } }], springs: [] }).ok, false);
+});
+
+test("a particle centered on a degenerate fixed segment gets a deterministic safe normal", () => {
+  const definition = createWorldDefinition({
+    gravity: zero, dt: .1, contact: { tolerance: 1e-6, maxCorrection: 10, restitution: 0, iterations: 1 },
+    particles: [{ id: "ball", position: zero, velocity: zero, inverseMass: 1, radius: 2 }], springs: [],
+    fixedSegments: [{ id: "point", start: zero, end: zero }],
+  }).value;
+  assert.deepEqual(step(definition, createInitialState(definition)).contacts[0].normal, vec2(0, -1));
+});
+
+test("direct spring neighbors are excluded from particle-pair contact", () => {
+  const definition = createWorldDefinition({
+    gravity: zero, dt: .1,
+    particles: [
+      { id: "a", position: zero, velocity: zero, inverseMass: 1, radius: 10 },
+      { id: "b", position: vec2(5, 0), velocity: zero, inverseMass: 1, radius: 10 },
+    ],
+    springs: [{ id: "join", a: "a", b: "b", restLength: 5, stiffness: 0, damping: 0 }],
+  }).value;
+  const result = step(definition, createInitialState(definition));
+  assert.equal(result.contacts.length, 0);
+  assert.deepEqual(result.state.particles.map((particle) => particle.position), [zero, vec2(5, 0)]);
 });

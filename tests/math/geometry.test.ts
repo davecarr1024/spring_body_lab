@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { aabb, aabbFromPoints, closestPoint, createTolerance, orientation, overlaps, pointSegmentDistance, segment, segmentIntersection, vec2 } from "../../src/math/index.mjs";
+import { aabb, aabbFromPoints, closestPoint, createTolerance, orientation, overlaps, pointSegmentDistance, segment, segmentIntersection, vec2 } from "../../src/math/index.js";
 
 const makeSegment = (start, end) => segment(vec2(...start), vec2(...end)).value;
 

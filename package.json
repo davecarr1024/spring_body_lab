@@ -6,12 +6,16 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "serve:dist": "node scripts/serve-dist.mjs",
-    "test": "node --test tests",
-    "coverage": "node --test --experimental-test-coverage tests",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/test.mjs",
+    "coverage": "node scripts/test.mjs coverage",
     "test:browser": "playwright test",
-    "check": "npm run coverage && npm run test:browser"
+    "check": "npm run typecheck && npm run coverage && npm run test:browser"
   },
   "devDependencies": {
-    "@playwright/test": "^1.62.1"
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.4.1",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
   }
 }
