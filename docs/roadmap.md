@@ -80,8 +80,9 @@ player goals, replay, pause/step, diagnostics, and recipe sharing.
 seam IDs and a breach goal. Its Ram action maps to recorded physics impulses;
 one deterministic step returns four break events, splits the wall, marks the
 goal achieved, and replays identically. The browser exposes and tests this
-path. Rope, sheet, block, and a distinct ram scene remain required to complete
-the phase.
+path. A named pinned rope recipe/swing target now provides the same replayable
+goal evidence. Sheet, block, and a distinct ram scene remain required to
+complete the phase.
 
 ## Deferred proposals
 

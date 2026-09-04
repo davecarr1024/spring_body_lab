@@ -28,3 +28,17 @@ export function createGridBody({ id = "body", rows, columns, origin, spacing, in
   }
   return Object.freeze({ ok: true, value: Object.freeze({ id, particles: freezeList(particles), springs: freezeList(springs), faces: freezeList(faces) }) });
 }
+
+/** Creates a one-dimensional spring chain with stable IDs for rope scenarios. */
+export function createRopeBody({ id = "rope", segments, origin, spacing, inverseMass = 1, radius = 6, stiffness = 90, damping = 4, breakStrain, velocity = zero }: any = {}) {
+  const diagnostics = [];
+  if (typeof id !== "string" || id.length === 0) diagnostics.push(diagnostic("invalid_body_id", "rope", "A rope needs a non-empty string ID."));
+  if (!Number.isInteger(segments) || segments < 1) diagnostics.push(diagnostic("invalid_rope_size", id, "Ropes need at least one segment."));
+  if (!isFiniteVec2(origin) || !isFiniteVec2(velocity) || !isFiniteNumber(spacing) || spacing <= 0 || !isFiniteNumber(inverseMass) || inverseMass < 0 || !isFiniteNumber(radius) || radius < 0 || !isFiniteNumber(stiffness) || stiffness < 0 || !isFiniteNumber(damping) || damping < 0 || (breakStrain !== undefined && (!isFiniteNumber(breakStrain) || breakStrain < 0))) diagnostics.push(diagnostic("invalid_rope_settings", id, "Rope values need finite non-negative parameters, positive spacing, and an optional finite non-negative break strain."));
+  if (diagnostics.length) return Object.freeze({ ok: false, diagnostics: freezeList(diagnostics) });
+  const particleId = (index: number) => `${id}:p:${index}`;
+  // The chain begins vertically so a horizontal impulse has an inspectable swing direction.
+  const particles = Array.from({ length: segments + 1 }, (_, index) => Object.freeze({ id: particleId(index), position: vec2(origin.x, origin.y + index * spacing), velocity, inverseMass, radius }));
+  const springs = Array.from({ length: segments }, (_, index) => Object.freeze({ id: `${id}:s:rope:${index}:${index + 1}`, a: particleId(index), b: particleId(index + 1), restLength: spacing, stiffness, damping, ...(breakStrain === undefined ? {} : { breakStrain }), kind: "rope" }));
+  return Object.freeze({ ok: true, value: Object.freeze({ id, particles: freezeList(particles), springs: freezeList(springs), faces: freezeList([]) }) });
+}

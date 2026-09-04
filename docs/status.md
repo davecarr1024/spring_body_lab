@@ -16,9 +16,9 @@ browser controls → deterministic game action → physics StepResult → math v
 | Layer | Current capability | Evidence |
 | --- | --- | --- |
 | Math/geometry library | typed immutable vectors/scalars, segments, AABBs, circles, polygon containment, classified intersections, and Euler/RK4 scalar/Vec2 ODE traces | unit tests cover ordinary, boundary, tolerance, overlap, degeneracy, numerical order, and invalid derivative cases |
-| Physics library | radius-aware particles, fixed segments, bounded correction/velocity repair, grid broad phase, direct-neighbor exclusions, signed strain, tensile fracture, stable components, immutable trace/replay | tests prove diagnostics, pin invariance, force/strain evidence, fixed and pair contacts, exclusions, breakage, components, and replay |
-| Game | deterministic multi-body lab plus a named weak-wall breach with an explicit outcome goal and Ram action | tests prove recipe composition, deterministic commands, returned break IDs, component split, goal achievement, and repeated-result equality |
-| Browser | Step, Play, Nudge amber/blue, weak-wall load/Ram, and Reset controls rendering state, goals, springs, contacts, normals, breaks, and components | six Playwright Chromium smoke tests against the built artifact, including an end-to-end weak-wall breach and stable Play/Pause controls |
+| Physics library | radius-aware particles, fixed segments, bounded correction/velocity repair, grid broad phase, direct-neighbor exclusions, signed strain, tensile fracture, stable components, rectangular and rope recipes, immutable trace/replay | tests prove diagnostics, pin invariance, force/strain evidence, fixed and pair contacts, exclusions, breakage, components, recipe topology, and replay |
+| Game | deterministic multi-body lab, weak-wall breach, and pinned-rope swing with explicit outcome goals | tests prove recipe composition, deterministic commands, returned break IDs, component split, threshold reach, goal achievement, and repeated-result equality |
+| Browser | Step, Play, Nudge amber/blue, weak-wall load/Ram, rope load/Swing, and Reset controls rendering state, goals, springs, contacts, normals, breaks, and components | seven Playwright Chromium smoke tests against the built artifact, including end-to-end weak-wall and rope goals plus stable Play/Pause controls |
 
 The browser deliberately displays a small real scene rather than numerical
 plots. The spring extension and force readouts come from the returned physics
@@ -37,6 +37,6 @@ classification queries. New physics behavior must use that public boundary.
 
 ## Next smallest work
 
-Phases 1–7 are complete and Phase 8 has its first named weak-wall breach.
-The next smallest work is a distinct deterministic rope scene with an explicit
-goal and replay evidence. See the [roadmap](roadmap.md) for the remaining gate.
+Phases 1–7 are complete and Phase 8 has named weak-wall and rope scenes. The
+next smallest work is a deterministic sheet goal with the same replay evidence.
+See the [roadmap](roadmap.md) for the remaining gate.

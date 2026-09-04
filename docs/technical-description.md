@@ -96,9 +96,12 @@ builds two deterministic grid bodies in a floor-and-wall arena.
 `createWeakWallBreach` builds a partially pinned grid wall whose four named
 seams have a break threshold. Its game-owned `ramWeakWall` action maps to two
 recorded public impulses; `advanceGame` derives an immutable game goal result
-from the physics state's broken spring IDs. The browser loads either scene and
-renders returned state, springs, contacts, normals, breaks, components, and
-goal status—it does not infer a breach privately.
+from the physics state's broken spring IDs. `createRopeSwing` consumes the
+physics rope recipe, pins its first particle, and derives a swing goal from the
+returned tail position; its named action also maps only to an impulse.
+The browser loads each scene and renders returned state, springs, contacts,
+normals, breaks, components, and goal status—it does not infer outcomes
+privately.
 
 `scripts/build.mjs` invokes TypeScript into `dist/src/`, copies the browser
 stylesheet, and writes the static page. `dist/` is generated and not

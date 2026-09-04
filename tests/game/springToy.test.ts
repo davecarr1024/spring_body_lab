@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { vec2 } from "../../src/math/index.js";
-import { advanceGame, createMultiBodyLab, createSpringToy, createWeakWallBreach, ramWeakWall } from "../../src/game/index.js";
+import { advanceGame, createMultiBodyLab, createRopeSwing, createSpringToy, createWeakWallBreach, ramWeakWall, swingRope } from "../../src/game/index.js";
 
 test("the game slice consumes a valid physics world and records its command", () => {
   const game = createSpringToy();
@@ -43,4 +43,22 @@ test("the weak-wall scene records a reproducible ram breach from public physics 
   assert.equal(breached.game.state.components.length, 2);
   assert.deepEqual(ramWeakWall(createWeakWallBreach()), breached);
   assert.equal(ramWeakWall(createMultiBodyLab()).result, undefined);
+});
+
+test("the rope scene uses a public impulse to reach its deterministic swing goal", () => {
+  const rope = createRopeSwing();
+  assert.equal(rope.scene, "rope-swing");
+  assert.equal(rope.definition.particles[0].inverseMass, 0);
+  assert.equal(rope.goal.achieved, false);
+  const swung = swingRope(rope);
+  assert.equal(swung.game.goal.achieved, true);
+  assert.equal(swung.game.state.particles.find((particle) => particle.id === "rope:p:4").position.x, 175);
+  assert.deepEqual(swingRope(createRopeSwing()), swung);
+  assert.equal(swingRope(createWeakWallBreach()).result, undefined);
+});
+
+test("unknown game goals remain unachieved rather than changing the physics step", () => {
+  const rope = createRopeSwing();
+  const unknownGoal = Object.freeze({ ...rope, goal: Object.freeze({ kind: "unknown", achieved: true }) });
+  assert.equal(advanceGame(unknownGoal).game.goal.achieved, false);
 });

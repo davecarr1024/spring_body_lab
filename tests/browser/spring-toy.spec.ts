@@ -50,6 +50,18 @@ test("the browser exposes a reproducible weak-wall breach goal", async ({ page }
   expect(pageErrors).toEqual([]);
 });
 
+test("the browser exposes a deterministic rope-swing goal", async ({ page }) => {
+  const pageErrors = await openToy(page);
+  await page.getByRole("button", { name: "Load rope" }).click();
+  await expect(page.getByRole("img", { name: "Rope swing arena" })).toBeVisible();
+  await expect(page.getByTestId("scene-name")).toHaveText("Rope swing");
+  await expect(page.getByTestId("goal-status")).toHaveText("Move rope tail past marker");
+  await page.getByRole("button", { name: "Swing rope" }).click();
+  await expect(page.getByTestId("goal-status")).toHaveText("Swing achieved");
+  await expect(page.getByTestId("step-value")).toHaveText("1");
+  expect(pageErrors).toEqual([]);
+});
+
 test("Reset restores the initial multi-body scene", async ({ page }) => {
   const pageErrors = await openToy(page);
   await page.getByRole("button", { name: "Step" }).click();
@@ -65,7 +77,7 @@ test("Play and Pause retain one accessible control set without page errors", asy
   const pageErrors = await openToy(page);
   await page.getByRole("button", { name: "Play" }).click();
   await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
-  await expect(page.getByRole("button")).toHaveCount(7);
+  await expect(page.getByRole("button")).toHaveCount(9);
   await page.getByRole("button", { name: "Pause" }).click();
   await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
   expect(pageErrors).toEqual([]);

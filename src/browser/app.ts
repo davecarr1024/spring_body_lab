@@ -1,4 +1,4 @@
-import { advanceGame, createMultiBodyLab, createWeakWallBreach, ramWeakWall } from "../game/index.js";
+import { advanceGame, createMultiBodyLab, createRopeSwing, createWeakWallBreach, ramWeakWall, swingRope } from "../game/index.js";
 import { vec2 } from "../math/index.js";
 
 let game: any = createMultiBodyLab();
@@ -8,6 +8,8 @@ let frame: number | undefined;
 const particle = (id: string) => game.state.particles.find((entry: any) => entry.id === id);
 const colorFor = (id: string) => id.startsWith("amber:") ? "amber" : "blue";
 const line = (start: any, end: any, className: string) => `<line class="${className}" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}"/>`;
+const sceneName = () => game.scene === "weak-wall-breach" ? "Weak wall breach" : game.scene === "rope-swing" ? "Rope swing" : "Multi-body contact lab";
+const goalStatus = () => !game.goal ? "Inspect forces and contact" : game.goal.kind === "breach" ? (game.goal.achieved ? "Breach achieved" : `Break ${game.goal.requiredSpringIds.length} weak seams`) : (game.goal.achieved ? "Swing achieved" : "Move rope tail past marker");
 
 function evidence() {
   const contacts = game.lastResult?.contacts ?? [];
@@ -23,15 +25,14 @@ function sceneMarkup() {
     return `<circle data-particle="${definition.id}" class="particle ${colorFor(definition.id)}" cx="${state.position.x}" cy="${state.position.y}" r="${definition.radius}"/>`;
   }).join("");
   const normals = contactEvidence.contacts.filter((contact: any) => contact.kind === "particle_segment").map((contact: any) => line(contact.point, { x: contact.point.x + contact.normal.x * 18, y: contact.point.y + contact.normal.y * 18 }, "normal")).join("");
-  return `<svg viewBox="0 0 480 300" role="img" aria-label="${game.scene === "weak-wall-breach" ? "Weak wall breach arena" : "Multiple soft bodies in a fixed contact arena"}">${fixed}${springs}${particles}${normals}</svg>`;
+  const label = game.scene === "weak-wall-breach" ? "Weak wall breach arena" : game.scene === "rope-swing" ? "Rope swing arena" : "Multiple soft bodies in a fixed contact arena";
+  return `<svg viewBox="0 0 480 300" role="img" aria-label="${label}">${fixed}${springs}${particles}${normals}</svg>`;
 }
 
 function render() {
   const contactEvidence = evidence();
   const latest = contactEvidence.latest;
-  const sceneName = game.scene === "weak-wall-breach" ? "Weak wall breach" : "Multi-body contact lab";
-  const goal = game.goal ? (game.goal.achieved ? "Breach achieved" : `Break ${game.goal.requiredSpringIds.length} weak seams`) : "Inspect forces and contact";
-  document.querySelector("#app")!.innerHTML = `<main><header><p>Spring Body Lab · ${sceneName}</p><h1>Deformable bodies, visible causes.</h1><span>Browser → game → physics → math</span></header><section>${sceneMarkup()}<div class="controls"><button id="step">Step</button><button id="play">${playing ? "Pause" : "Play"}</button><button id="nudge-amber">Nudge amber</button><button id="nudge-blue">Nudge blue</button><button id="weak-wall">Load weak wall</button><button id="ram-wall">Ram wall</button><button id="reset">Reset</button></div><dl><div><dt>scene</dt><dd data-testid="scene-name">${sceneName}</dd></div><div><dt>goal</dt><dd data-testid="goal-status">${goal}</dd></div><div><dt>step</dt><dd data-testid="step-value">${game.state.stepIndex}</dd></div><div><dt>bodies</dt><dd data-testid="body-count">${game.bodies.length}</dd></div><div><dt>particles</dt><dd data-testid="particle-count">${game.state.particles.length}</dd></div><div><dt>components</dt><dd data-testid="component-count">${game.state.components.length}</dd></div><div><dt>broken springs</dt><dd data-testid="broken-spring-count">${game.state.brokenSpringIds.length}</dd></div><div><dt>breaks this step</dt><dd data-testid="break-count">${contactEvidence.events.length}</dd></div><div><dt>contacts this step</dt><dd data-testid="contact-count">${contactEvidence.contacts.length}</dd></div><div><dt>latest contact</dt><dd data-testid="latest-contact">${latest ? latest.kind : "none"}</dd></div></dl><p class="note">Springs, circles, contact normals, strain breaks, components, and goal state are returned physics/game evidence. The browser only renders the game record.</p></section></main>`;
+  document.querySelector("#app")!.innerHTML = `<main><header><p>Spring Body Lab · ${sceneName()}</p><h1>Deformable bodies, visible causes.</h1><span>Browser → game → physics → math</span></header><section>${sceneMarkup()}<div class="controls"><button id="step">Step</button><button id="play">${playing ? "Pause" : "Play"}</button><button id="nudge-amber">Nudge amber</button><button id="nudge-blue">Nudge blue</button><button id="weak-wall">Load weak wall</button><button id="ram-wall">Ram wall</button><button id="rope">Load rope</button><button id="swing-rope">Swing rope</button><button id="reset">Reset</button></div><dl><div><dt>scene</dt><dd data-testid="scene-name">${sceneName()}</dd></div><div><dt>goal</dt><dd data-testid="goal-status">${goalStatus()}</dd></div><div><dt>step</dt><dd data-testid="step-value">${game.state.stepIndex}</dd></div><div><dt>bodies</dt><dd data-testid="body-count">${game.bodies.length}</dd></div><div><dt>particles</dt><dd data-testid="particle-count">${game.state.particles.length}</dd></div><div><dt>components</dt><dd data-testid="component-count">${game.state.components.length}</dd></div><div><dt>broken springs</dt><dd data-testid="broken-spring-count">${game.state.brokenSpringIds.length}</dd></div><div><dt>breaks this step</dt><dd data-testid="break-count">${contactEvidence.events.length}</dd></div><div><dt>contacts this step</dt><dd data-testid="contact-count">${contactEvidence.contacts.length}</dd></div><div><dt>latest contact</dt><dd data-testid="latest-contact">${latest ? latest.kind : "none"}</dd></div></dl><p class="note">Springs, circles, contact normals, strain breaks, components, and goal state are returned physics/game evidence. The browser only renders the game record.</p></section></main>`;
   document.querySelector("#step")!.addEventListener("click", () => tick());
   document.querySelector("#play")!.addEventListener("click", () => { playing = !playing; if (playing) frame = requestAnimationFrame(animate); render(); });
   document.querySelector("#nudge-amber")!.addEventListener("click", () => tick([{ kind: "applyImpulse", particleId: "amber:p:0:0", impulse: vec2(90, -80) }]));
@@ -43,7 +44,14 @@ function render() {
     game = Object.freeze({ ...advanced.game, lastResult: advanced.result });
     render();
   });
-  document.querySelector("#reset")!.addEventListener("click", () => { playing = false; if (frame) cancelAnimationFrame(frame); game = game.scene === "weak-wall-breach" ? createWeakWallBreach() : createMultiBodyLab(); render(); });
+  document.querySelector("#rope")!.addEventListener("click", () => { playing = false; if (frame) cancelAnimationFrame(frame); game = createRopeSwing(); render(); });
+  document.querySelector("#swing-rope")!.addEventListener("click", () => {
+    const advanced = swingRope(game);
+    if (!advanced.result) return;
+    game = Object.freeze({ ...advanced.game, lastResult: advanced.result });
+    render();
+  });
+  document.querySelector("#reset")!.addEventListener("click", () => { playing = false; if (frame) cancelAnimationFrame(frame); game = game.scene === "weak-wall-breach" ? createWeakWallBreach() : game.scene === "rope-swing" ? createRopeSwing() : createMultiBodyLab(); render(); });
 }
 
 function advance(commands: any[] = []) {
@@ -77,7 +85,7 @@ function updateEvidence() {
   document.querySelector("[data-testid=component-count]")!.textContent = String(game.state.components.length);
   document.querySelector("[data-testid=broken-spring-count]")!.textContent = String(game.state.brokenSpringIds.length);
   document.querySelector("[data-testid=break-count]")!.textContent = String(contactEvidence.events.length);
-  document.querySelector("[data-testid=goal-status]")!.textContent = game.goal ? (game.goal.achieved ? "Breach achieved" : `Break ${game.goal.requiredSpringIds.length} weak seams`) : "Inspect forces and contact";
+  document.querySelector("[data-testid=goal-status]")!.textContent = goalStatus();
 }
 
 function animate() { if (!playing) return; advance(); updateEvidence(); frame = requestAnimationFrame(animate); }

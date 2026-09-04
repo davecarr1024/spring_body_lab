@@ -1,5 +1,5 @@
 import { vec2, zero } from "../math/index.js";
-import { appendTraceStep, createGridBody, createTrace, createWorldDefinition } from "../physics/index.js";
+import { appendTraceStep, createGridBody, createRopeBody, createTrace, createWorldDefinition } from "../physics/index.js";
 
 export function createSpringToy() {
   const definition = createWorldDefinition({
@@ -39,8 +39,14 @@ export function createMultiBodyLab() {
 
 export function advanceGame(game: any, commands: any[] = []) {
   const advancedTrace = appendTraceStep(game.trace, commands);
-  const goal = game.goal && Object.freeze({ ...game.goal, achieved: game.goal.requiredSpringIds.every((springId: string) => advancedTrace.trace.state.brokenSpringIds.includes(springId)) });
+  const goal = game.goal && Object.freeze({ ...game.goal, achieved: goalAchieved(game.goal, advancedTrace.trace.state) });
   return Object.freeze({ game: Object.freeze({ ...game, state: advancedTrace.trace.state, trace: advancedTrace.trace, ...(goal ? { goal } : {}) }), result: advancedTrace.result });
+}
+
+function goalAchieved(goal: any, state: any) {
+  if (goal.kind === "breach") return goal.requiredSpringIds.every((springId: string) => state.brokenSpringIds.includes(springId));
+  if (goal.kind === "reach_x") return state.particles.find((particle: any) => particle.id === goal.particleId)?.position.x >= goal.minimumX;
+  return false;
 }
 
 /** Builds a reproducible player-sized fracture puzzle from a generated wall. */
@@ -72,4 +78,28 @@ export function ramWeakWall(game: any) {
     { kind: "applyImpulse", particleId: "wall:p:0:2", impulse: vec2(300, 0) },
     { kind: "applyImpulse", particleId: "wall:p:1:2", impulse: vec2(300, 0) },
   ]);
+}
+
+/** Builds a pinned rope and a state-derived swing target for a small game goal. */
+export function createRopeSwing() {
+  const recipe = createRopeBody({ id: "rope", segments: 4, origin: vec2(170, 70), spacing: 24, radius: 7, stiffness: 70, damping: 4 });
+  if (!recipe.ok) throw new Error("The built-in rope recipe must be valid.");
+  const particles = recipe.value.particles.map((particle, index) => Object.freeze({ ...particle, inverseMass: index === 0 ? 0 : 1 }));
+  const definition = createWorldDefinition({ gravity: zero, dt: 1 / 60, particles, springs: recipe.value.springs });
+  if (!definition.ok) throw new Error("The built-in rope world must be valid.");
+  const trace = createTrace(definition.value);
+  return Object.freeze({
+    scene: "rope-swing",
+    definition: definition.value,
+    state: trace.state,
+    trace,
+    bodies: Object.freeze([recipe.value]),
+    goal: Object.freeze({ kind: "reach_x", particleId: "rope:p:4", minimumX: 175, achieved: false }),
+  });
+}
+
+/** The named swing action stays a game adapter over the public impulse command. */
+export function swingRope(game: any) {
+  if (game.scene !== "rope-swing") return Object.freeze({ game, result: undefined });
+  return advanceGame(game, [{ kind: "applyImpulse", particleId: "rope:p:4", impulse: vec2(300, 0) }]);
 }

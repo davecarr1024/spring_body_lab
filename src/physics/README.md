@@ -33,5 +33,6 @@ force on its breaking step and is omitted from all future steps. The returned
 component report is recalculated from intact springs in stable declaration
 order.
 
-`body.ts` provides deterministic rectangular recipes, while `trace.ts` records
-normalized commands and recomputes the full sequence for replay verification.
+`body.ts` provides deterministic rectangular-grid and one-dimensional rope
+recipes, while `trace.ts` records normalized commands and recomputes the full
+sequence for replay verification.
