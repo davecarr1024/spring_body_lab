@@ -168,10 +168,11 @@ It starts with rectangular/triangular grids only. Self-collision later excludes
 self, direct graph neighbors, and particles sharing a face/cell; each
 exclusion is inspectable.
 
-Fracture begins with a local strain threshold on a spring. Breakage emits an
-event and removes only that spring's future force. Component recomputation
-preserves IDs and history. Shear, bending, mesh splitting, 3D, and continuous
-collision are future hypotheses, not hidden requirements.
+Fracture begins with a local signed tensile-strain threshold on a spring.
+Breakage emits an event after the completed step and removes only that spring's
+future force. Stable component recomputation preserves IDs and history. Shear,
+bending, mesh splitting, 3D, and continuous collision are future hypotheses,
+not hidden requirements.
 
 ## Game and browser boundary
 

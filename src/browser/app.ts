@@ -11,13 +11,13 @@ const line = (start: any, end: any, className: string) => `<line class="${classN
 
 function evidence() {
   const contacts = game.lastResult?.contacts ?? [];
-  return Object.freeze({ contacts, latest: contacts.at(-1) });
+  return Object.freeze({ contacts, latest: contacts.at(-1), events: game.lastResult?.events ?? [] });
 }
 
 function sceneMarkup() {
   const contactEvidence = evidence();
   const fixed = game.definition.fixedSegments.map((fixed: any) => line(fixed.start, fixed.end, "fixed")).join("");
-  const springs = game.definition.springs.map((spring: any) => `<line data-spring="${spring.id}" class="spring ${colorFor(spring.a)}" x1="${particle(spring.a).position.x}" y1="${particle(spring.a).position.y}" x2="${particle(spring.b).position.x}" y2="${particle(spring.b).position.y}"/>`).join("");
+  const springs = game.definition.springs.map((spring: any) => `<line data-spring="${spring.id}" class="spring ${colorFor(spring.a)} ${game.state.brokenSpringIds.includes(spring.id) ? "broken" : ""}" x1="${particle(spring.a).position.x}" y1="${particle(spring.a).position.y}" x2="${particle(spring.b).position.x}" y2="${particle(spring.b).position.y}"/>`).join("");
   const particles = game.definition.particles.map((definition: any) => {
     const state = particle(definition.id);
     return `<circle data-particle="${definition.id}" class="particle ${colorFor(definition.id)}" cx="${state.position.x}" cy="${state.position.y}" r="${definition.radius}"/>`;
@@ -29,7 +29,7 @@ function sceneMarkup() {
 function render() {
   const contactEvidence = evidence();
   const latest = contactEvidence.latest;
-  document.querySelector("#app")!.innerHTML = `<main><header><p>Spring Body Lab · multi-body physics</p><h1>Deformable bodies, visible causes.</h1><span>Browser → game → physics → math</span></header><section>${sceneMarkup()}<div class="controls"><button id="step">Step</button><button id="play">${playing ? "Pause" : "Play"}</button><button id="nudge-amber">Nudge amber</button><button id="nudge-blue">Nudge blue</button><button id="reset">Reset</button></div><dl><div><dt>step</dt><dd data-testid="step-value">${game.state.stepIndex}</dd></div><div><dt>bodies</dt><dd data-testid="body-count">${game.bodies.length}</dd></div><div><dt>particles</dt><dd data-testid="particle-count">${game.state.particles.length}</dd></div><div><dt>contacts this step</dt><dd data-testid="contact-count">${contactEvidence.contacts.length}</dd></div><div><dt>latest contact</dt><dd data-testid="latest-contact">${latest ? latest.kind : "none"}</dd></div></dl><p class="note">Springs, circles, contact normals, and contact counts are returned physics evidence. The browser only renders the game record.</p></section></main>`;
+  document.querySelector("#app")!.innerHTML = `<main><header><p>Spring Body Lab · multi-body physics</p><h1>Deformable bodies, visible causes.</h1><span>Browser → game → physics → math</span></header><section>${sceneMarkup()}<div class="controls"><button id="step">Step</button><button id="play">${playing ? "Pause" : "Play"}</button><button id="nudge-amber">Nudge amber</button><button id="nudge-blue">Nudge blue</button><button id="reset">Reset</button></div><dl><div><dt>step</dt><dd data-testid="step-value">${game.state.stepIndex}</dd></div><div><dt>bodies</dt><dd data-testid="body-count">${game.bodies.length}</dd></div><div><dt>particles</dt><dd data-testid="particle-count">${game.state.particles.length}</dd></div><div><dt>components</dt><dd data-testid="component-count">${game.state.components.length}</dd></div><div><dt>broken springs</dt><dd data-testid="broken-spring-count">${game.state.brokenSpringIds.length}</dd></div><div><dt>breaks this step</dt><dd data-testid="break-count">${contactEvidence.events.length}</dd></div><div><dt>contacts this step</dt><dd data-testid="contact-count">${contactEvidence.contacts.length}</dd></div><div><dt>latest contact</dt><dd data-testid="latest-contact">${latest ? latest.kind : "none"}</dd></div></dl><p class="note">Springs, circles, contact normals, strain breaks, and component counts are returned physics evidence. The browser only renders the game record.</p></section></main>`;
   document.querySelector("#step")!.addEventListener("click", () => tick());
   document.querySelector("#play")!.addEventListener("click", () => { playing = !playing; if (playing) frame = requestAnimationFrame(animate); render(); });
   document.querySelector("#nudge-amber")!.addEventListener("click", () => tick([{ kind: "applyImpulse", particleId: "amber:p:0:0", impulse: vec2(90, -80) }]));
@@ -59,11 +59,15 @@ function updateEvidence() {
     element?.setAttribute("y1", a.position.y);
     element?.setAttribute("x2", b.position.x);
     element?.setAttribute("y2", b.position.y);
+    element?.classList.toggle("broken", game.state.brokenSpringIds.includes(spring.id));
   }
   const contactEvidence = evidence();
   document.querySelector("[data-testid=step-value]")!.textContent = String(game.state.stepIndex);
   document.querySelector("[data-testid=contact-count]")!.textContent = String(contactEvidence.contacts.length);
   document.querySelector("[data-testid=latest-contact]")!.textContent = contactEvidence.latest ? contactEvidence.latest.kind : "none";
+  document.querySelector("[data-testid=component-count]")!.textContent = String(game.state.components.length);
+  document.querySelector("[data-testid=broken-spring-count]")!.textContent = String(game.state.brokenSpringIds.length);
+  document.querySelector("[data-testid=break-count]")!.textContent = String(contactEvidence.events.length);
 }
 
 function animate() { if (!playing) return; advance(); updateEvidence(); frame = requestAnimationFrame(animate); }

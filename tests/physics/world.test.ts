@@ -44,7 +44,7 @@ test("rest-length, commands, and a degenerate spring have explicit behavior", ()
   assert.equal(rejected.diagnostics.length, 2);
   assert.equal(rejected.state.particles[1].velocity.x, 0);
   const degenerate = world({ particles: [{ id: "pin", position: zero, velocity: zero, inverseMass: 0 }, { id: "free", position: zero, velocity: zero, inverseMass: 1 }] }).value;
-  assert.deepEqual(step(degenerate, createInitialState(degenerate)).forces[0], { springId: "spring", kind: "degenerate" });
+  assert.deepEqual(step(degenerate, createInitialState(degenerate)).forces[0], { springId: "spring", kind: "degenerate", strain: { kind: "undefined_direction" } });
 });
 
 test("traces retain immutable step-indexed commands and replay their evidence", () => {
@@ -114,4 +114,39 @@ test("direct spring neighbors are excluded from particle-pair contact", () => {
   const result = step(definition, createInitialState(definition));
   assert.equal(result.contacts.length, 0);
   assert.deepEqual(result.state.particles.map((particle) => particle.position), [zero, vec2(5, 0)]);
+});
+
+test("strain telemetry breaks weak springs deterministically and reports surviving components", () => {
+  const definition = createWorldDefinition({
+    gravity: zero, dt: .1,
+    particles: [
+      { id: "a", position: zero, velocity: zero, inverseMass: 1 },
+      { id: "b", position: vec2(1, 0), velocity: zero, inverseMass: 1 },
+    ],
+    springs: [{ id: "weak", a: "a", b: "b", restLength: 1, stiffness: 0, damping: 0, breakStrain: .5 }],
+  }).value;
+  const initial = createInitialState(definition);
+  assert.deepEqual(initial.components, [{ particleIds: ["a", "b"], springIds: ["weak"] }]);
+  const broken = step(definition, initial, [{ kind: "applyImpulse", particleId: "b", impulse: vec2(20, 0) }]);
+  assert.deepEqual(broken.forces[0].strain, { kind: "finite", value: 0 });
+  assert.deepEqual(broken.events, [{ kind: "spring_break", springId: "weak", strain: 2, breakStrain: .5 }]);
+  assert.deepEqual(broken.state.brokenSpringIds, ["weak"]);
+  assert.deepEqual(broken.components, [{ particleIds: ["a"], springIds: [] }, { particleIds: ["b"], springIds: [] }]);
+  assert.deepEqual(step(definition, broken.state).forces, []);
+  assert.equal(Object.isFrozen(broken.events[0]), true);
+  assert.equal(Object.isFrozen(broken.components[0].particleIds), true);
+  const trace = appendTraceStep(createTrace(definition), [{ kind: "applyImpulse", particleId: "b", impulse: vec2(20, 0) }]).trace;
+  assert.deepEqual(replayTrace(trace), trace);
+  assert.equal(createWorldDefinition({ particles: [{ id: "a", position: zero, velocity: zero, inverseMass: 1 }], springs: [{ id: "bad", a: "a", b: "a", restLength: 0, stiffness: 0, damping: 0, breakStrain: -1 }] }).ok, false);
+});
+
+test("zero-rest springs retain explicit undefined strain telemetry", () => {
+  const definition = createWorldDefinition({
+    gravity: zero, dt: .1,
+    particles: [{ id: "a", position: zero, velocity: zero, inverseMass: 1 }, { id: "b", position: vec2(1, 0), velocity: zero, inverseMass: 1 }],
+    springs: [{ id: "zero", a: "a", b: "b", restLength: 0, stiffness: 0, damping: 0, breakStrain: 0 }],
+  }).value;
+  const result = step(definition, createInitialState(definition));
+  assert.deepEqual(result.forces[0].strain, { kind: "undefined_rest_length" });
+  assert.deepEqual(result.events, []);
 });

@@ -5,6 +5,7 @@ export function isFiniteNumber(value: unknown): value is number {
 }
 
 export function createTolerance({ absolute = 1e-9, relative = 1e-9 }: Partial<Tolerance> = {}): Result<Tolerance> {
+  // A shared policy keeps numerical classification consistent across the API.
   if (!isFiniteNumber(absolute) || !isFiniteNumber(relative) || absolute < 0 || relative < 0) {
     return Object.freeze({ ok: false, diagnostics: [diagnostic("invalid_tolerance", "tolerance", "Absolute and relative tolerances must be finite non-negative numbers.")] });
   }
@@ -14,6 +15,7 @@ export function createTolerance({ absolute = 1e-9, relative = 1e-9 }: Partial<To
 export const defaultTolerance = (createTolerance() as { value: Tolerance }).value;
 
 export function approximatelyEqual(left: number, right: number, tolerance: Tolerance = defaultTolerance): boolean {
+  // Relative error scales with the operands; absolute error still handles zero.
   return Math.abs(left - right) <= tolerance.absolute + tolerance.relative * Math.max(Math.abs(left), Math.abs(right));
 }
 

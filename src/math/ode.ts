@@ -24,6 +24,7 @@ function validate<T extends OdeValue>(problem: OdeProblem<T>): readonly Diagnost
 }
 
 function derivativeAt<T extends OdeValue>(problem: OdeProblem<T>, time: number, state: T): Result<T> {
+  // A solver must reject a bad derivative before it can pollute later samples.
   const value = problem.derivative(time, state);
   if (!sameShape(state, value) || !isOdeValue(value)) return Object.freeze({ ok: false, diagnostics: freezeList([diagnostic("invalid_ode_derivative_result", "derivative", "ODE derivatives must return a finite value with the initial state's shape.")]) });
   return Object.freeze({ ok: true, value });
@@ -42,6 +43,7 @@ export function integrateEuler<T extends OdeValue>(problem: OdeProblem<T>): Resu
   let { state, time } = prepared.value;
   let evaluations = 0;
   for (let step = 0; step < problem.steps; step += 1) {
+    // Explicit Euler advances from the derivative at the beginning of each interval.
     const derivative = derivativeAt(problem, time, state);
     evaluations += 1;
     if (derivative.ok === false) return failure(derivative.diagnostics);
@@ -59,6 +61,7 @@ export function integrateRungeKutta4<T extends OdeValue>(problem: OdeProblem<T>)
   let { state, time } = prepared.value;
   let evaluations = 0;
   for (let step = 0; step < problem.steps; step += 1) {
+    // RK4 samples the interval four times, then uses the classical 1:2:2:1 blend.
     const k1 = derivativeAt(problem, time, state); evaluations += 1;
     if (k1.ok === false) return failure(k1.diagnostics);
     const k2 = derivativeAt(problem, time + problem.dt / 2, addValue(state, scaleValue(k1.value, problem.dt / 2))); evaluations += 1;

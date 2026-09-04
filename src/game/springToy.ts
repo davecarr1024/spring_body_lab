@@ -17,7 +17,8 @@ export function createSpringToy() {
 }
 
 export function createMultiBodyLab() {
-  const left = createGridBody({ id: "amber", rows: 2, columns: 2, origin: vec2(105, 80), spacing: 26, radius: 9, stiffness: 70, damping: 5, velocity: vec2(18, 0) });
+  // Amber has intentionally weak seams so the lab can expose real break evidence.
+  const left = createGridBody({ id: "amber", rows: 2, columns: 2, origin: vec2(105, 80), spacing: 26, radius: 9, stiffness: 70, damping: 5, breakStrain: .04, velocity: vec2(18, 0) });
   const right = createGridBody({ id: "blue", rows: 2, columns: 2, origin: vec2(290, 140), spacing: 26, radius: 9, stiffness: 70, damping: 5, velocity: vec2(-12, 0) });
   if (!left.ok || !right.ok) throw new Error("Built-in body recipes must be valid.");
   const definition = createWorldDefinition({

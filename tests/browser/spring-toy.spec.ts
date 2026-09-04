@@ -16,6 +16,8 @@ test("the built browser artifact presents the initial multiple-body lab", async 
   await expect(page.getByTestId("step-value")).toHaveText("0");
   await expect(page.getByTestId("body-count")).toHaveText("2");
   await expect(page.getByTestId("particle-count")).toHaveText("8");
+  await expect(page.getByTestId("component-count")).toHaveText("2");
+  await expect(page.getByTestId("broken-spring-count")).toHaveText("0");
   expect(pageErrors).toEqual([]);
 });
 
@@ -31,6 +33,8 @@ test("body nudges advance the game command path", async ({ page }) => {
   const pageErrors = await openToy(page);
   await page.getByRole("button", { name: "Nudge amber" }).click();
   await expect(page.getByTestId("step-value")).toHaveText("1");
+  await expect(page.getByTestId("break-count")).not.toHaveText("0");
+  await expect(page.getByTestId("broken-spring-count")).not.toHaveText("0");
   expect(pageErrors).toEqual([]);
 });
 

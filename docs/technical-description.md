@@ -60,7 +60,8 @@ finite non-negative rest length, stiffness, and damping.
 - next `WorldState` and incremented step index;
 - one spring force record per intact spring, including extension and the
   equal-and-opposite endpoint forces, or an explicit `degenerate` record;
-- immutable contact records plus diagnostics/events collections.
+- immutable contact records, fracture events, and post-fracture component
+  reports plus diagnostics.
 
 The current integration is semi-implicit Euler. Forces accumulate as gravity
 and Hooke-plus-axial-damping spring force. The force on `b` is calculated as
@@ -79,6 +80,14 @@ After integration, fixed geometry uses public point-to-segment distance
 evidence. Particle-pair candidates come from a deterministic uniform grid;
 direct spring neighbors are excluded before narrow phase. Contact records retain
 normal, penetration, bounded correction, and velocity repair/impulse.
+
+Each force record includes signed local strain when its rest length is nonzero;
+zero-rest and zero-direction cases retain explicit classifications. A spring
+may set a finite non-negative `breakStrain`. Once post-integration tensile
+strain reaches the threshold, the current `StepResult` emits a `spring_break`
+event; future steps omit that spring. Stable declaration-order graph traversal
+then reports the remaining connected components. The whole evidence remains in
+the immutable trace and is verified by replay.
 
 ## Game and browser
 

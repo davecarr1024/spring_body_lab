@@ -30,6 +30,7 @@ export function overlaps(left, right) {
 }
 
 export function closestPoint(point, line, tolerance = defaultTolerance) {
+  // Clamp the line parameter so this remains a segment query, not a ray query.
   const direction = subtract(line.end, line.start);
   const denominator = lengthSquared(direction);
   if (isNearZero(denominator, { absolute: tolerance.absolute ** 2, relative: tolerance.relative })) return Object.freeze({ kind: "degenerate", point: line.start });
@@ -65,6 +66,7 @@ export function segmentIntersection(left, right, tolerance = defaultTolerance) {
   if (isNearZero(leftLength, squaredTolerance) || isNearZero(rightLength, squaredTolerance)) return Object.freeze({ kind: "degenerate" });
   const offset = subtract(right.start, left.start);
   if (approximatelyEqual(denominator, 0, tolerance)) {
+    // Parallel lines either miss or need the separate collinear overlap path.
     if (!approximatelyEqual(cross(offset, leftDirection), 0, tolerance)) return Object.freeze({ kind: "none" });
     const candidates = [left.start, left.end, right.start, right.end]
       .filter((point) => onSegment(point, left, tolerance) && onSegment(point, right, tolerance))
@@ -107,6 +109,7 @@ export function containsPointCircle(value: Circle2, point: Vec2, tolerance: Tole
 }
 
 export function signedPolygonArea(points: Polygon2): number {
+  // Shoelace accumulation preserves winding: counter-clockwise areas are positive.
   if (points.length < 3) return 0;
   return points.reduce((twiceArea, point, index) => {
     const next = points[(index + 1) % points.length];
@@ -121,6 +124,7 @@ export function pointInPolygon(point: Vec2, polygon: Polygon2, tolerance: Tolera
   for (let index = 0; index < polygon.length; index += 1) {
     const start = polygon[index];
     const end = polygon[(index + 1) % polygon.length];
+    // Boundary is a first-class answer, rather than an arbitrary inside/outside tie-break.
     if (pointSegmentDistance(point, { start, end }, tolerance).distance <= tolerance.absolute) return Object.freeze({ kind: "boundary" });
     if ((start.y > point.y) !== (end.y > point.y) && point.x < (end.x - start.x) * (point.y - start.y) / (end.y - start.y) + start.x) inside = !inside;
   }

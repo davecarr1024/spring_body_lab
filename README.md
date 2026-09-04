@@ -31,14 +31,16 @@ Open `dist/index.html` after building.
 - validated immutable physics worlds with radius-aware particles, fixed
   segments, grid broad-phase candidates, and one fixed-step transition;
 - force/contact evidence, bounded correction, direct-neighbor exclusions,
-  command-driven impulses, and deterministic in-memory trace/replay;
+  command-driven impulses, deterministic tensile-spring fracture, connected
+  component reports, and deterministic in-memory trace/replay;
 - deterministic rectangular soft-body recipes with structural/diagonal springs
   and faces; and
 - an interactable browser arena with two bodies, fixed walls/floor, Nudge,
   Step, Play/Pause, Reset, and returned contact-normal rendering.
 
-This is not yet fracture or a complete soft-body game. Phases 1–6 prove the
-layers compose correctly; strain and deterministic spring breakage are next.
+This is not yet a complete soft-body game. Phases 1–7 prove the layers compose
+correctly; named playable rope, sheet, block, weak-wall, and ram scenes are
+next.
 
 ## Read deeper
 
@@ -48,6 +50,8 @@ layers compose correctly; strain and deterministic spring breakage are next.
   public interfaces, data flow, and verification boundaries.
 - [Math API](docs/math-api.md) describes the published 2D geometry and ODE
   interface.
+- [Math module guide](src/math/README.md) and [physics module guide](src/physics/README.md)
+  document the local public boundaries and data flow.
 - [Design and roadmap](docs/design.md) is the canonical design and phased
   path to the soft-body game.
 - [Roadmap](docs/roadmap.md) records current vertical-slice gates.
@@ -59,5 +63,5 @@ layers compose correctly; strain and deterministic spring breakage are next.
 
 ## Next small step
 
-Add local strain telemetry and one deterministic spring-break event, while
-keeping the multi-body arena and its replay evidence stable.
+Build the first named soft-body game scene on the fracture-capable library,
+starting with a reproducible weak-wall breach.

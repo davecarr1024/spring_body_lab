@@ -20,4 +20,11 @@ test("grid recipes classify invalid topology and numeric settings", () => {
   assert.equal(createGridBody({ id: "", rows: 1, columns: 1, origin: zero, spacing: 0 }).ok, false);
   assert.equal(createGridBody({ rows: 2, columns: 2, origin: { x: Infinity, y: 0 }, spacing: 1 }).ok, false);
   assert.equal(createGridBody({ rows: 2, columns: 2, origin: zero, spacing: 1, inverseMass: -1, radius: -1, stiffness: -1, damping: -1 }).ok, false);
+  assert.equal(createGridBody({ rows: 2, columns: 2, origin: zero, spacing: 1, breakStrain: -1 }).ok, false);
+});
+
+test("grid recipes propagate an optional break strain to each generated spring", () => {
+  const body = createGridBody({ id: "weak", rows: 2, columns: 2, origin: zero, spacing: 1, breakStrain: .25 });
+  assert.equal(body.ok, true);
+  assert.equal(body.value.springs.every((spring) => spring.breakStrain === .25), true);
 });

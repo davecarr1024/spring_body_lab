@@ -60,13 +60,16 @@ topology exclusions.
 neighbors are excluded from pair contact; a deterministic grid broad phase
 feeds the narrow phase; and the browser renders returned contact evidence.
 
-## Phase 7 — Strain and fracture
+## Phase 7 — Strain and fracture (complete)
 
 **Deliverable:** local strain telemetry, deterministic spring breakage, event
 records, and component reporting.
 
-**Evidence:** a deliberately weak spring breaks on a known step, applies no
-future force, and remains replayable without non-finite state.
+**Evidence:** signed local strain records classify zero-rest/direction edge
+cases, a deliberately weak spring breaks on a known post-integration step,
+applies no future force, splits stable components, and remains replayable
+without non-finite state. The browser renders broken seams and returned break/
+component evidence.
 
 ## Phase 8 — Soft-body game
 

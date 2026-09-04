@@ -27,12 +27,14 @@ export function angle(value: Vec2): number { return Math.atan2(value.y, value.x)
 export function approximatelyEqualVec2(left: Vec2, right: Vec2, tolerance: Tolerance = defaultTolerance): boolean { return Math.abs(left.x - right.x) <= tolerance.absolute + tolerance.relative * Math.max(Math.abs(left.x), Math.abs(right.x)) && Math.abs(left.y - right.y) <= tolerance.absolute + tolerance.relative * Math.max(Math.abs(left.y), Math.abs(right.y)); }
 
 export function normalize(value: Vec2, tolerance: Tolerance = defaultTolerance): UnitResult {
+  // Never divide by a near-zero length: callers receive an explicit degeneracy.
   const magnitude = length(value);
   if (isNearZero(magnitude, tolerance)) return Object.freeze({ kind: "degenerate" });
   return Object.freeze({ kind: "unit", value: scale(value, 1 / magnitude) });
 }
 
 export function project(value: Vec2, onto: Vec2, tolerance: Tolerance = defaultTolerance): PointResult {
+  // Projection is undefined for a zero direction, so it shares normalize's tag.
   const denominator = lengthSquared(onto);
   if (isNearZero(denominator, { absolute: tolerance.absolute ** 2, relative: tolerance.relative })) return Object.freeze({ kind: "degenerate" });
   return Object.freeze({ kind: "point", value: scale(onto, dot(value, onto) / denominator) });
@@ -44,6 +46,7 @@ export function reject(value: Vec2, onto: Vec2, tolerance: Tolerance = defaultTo
 }
 
 export function reflect(value: Vec2, normal: Vec2, tolerance: Tolerance = defaultTolerance): UnitResult | PointResult {
+  // v - 2 * proj(v,n) mirrors v across the plane whose normal is n.
   const unit = normalize(normal, tolerance);
   return unit.kind === "degenerate" ? unit : Object.freeze({ kind: "point", value: subtract(value, scale(unit.value, 2 * dot(value, unit.value))) });
 }

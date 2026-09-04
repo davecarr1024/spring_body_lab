@@ -16,6 +16,7 @@ export function createTrace(definition: any, initialState: any = createInitialSt
 }
 
 export function appendTraceStep(trace: any, commands: ReadonlyArray<any> = []) {
+  // Record a normalized command fact, then retain the exact result it produced.
   const recordedCommands = freezeList(commands.map(recordCommand));
   const result = step(trace.definition, trace.state, recordedCommands);
   const entry = Object.freeze({ stepIndex: trace.state.stepIndex, commands: recordedCommands, result });
@@ -29,6 +30,7 @@ export function appendTraceStep(trace: any, commands: ReadonlyArray<any> = []) {
 }
 
 export function replayTrace(trace: any) {
+  // Replay deliberately recomputes evidence from the initial state instead of trusting snapshots.
   return trace.entries.reduce(
     (replayed, entry) => appendTraceStep(replayed, entry.commands).trace,
     createTrace(trace.definition, trace.initialState),
