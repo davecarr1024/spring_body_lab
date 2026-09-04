@@ -84,6 +84,21 @@ test("the browser exposes a contact-proven block ram goal", async ({ page }) => 
   expect(pageErrors).toEqual([]);
 });
 
+test("Breach Run joins bodies, arena, player action, and objective in one mission", async ({ page }) => {
+  const pageErrors = await openToy(page);
+  await page.getByRole("button", { name: "Start Breach Run" }).click();
+  await expect(page.getByRole("img", { name: "Breach Run arena" })).toBeVisible();
+  await expect(page.getByTestId("scene-name")).toHaveText("Breach Run");
+  await expect(page.getByTestId("goal-status")).toHaveText("Objective: breach the weak wall");
+  await expect(page.getByTestId("body-count")).toHaveText("2");
+  await expect(page.getByTestId("particle-count")).toHaveText("11");
+  await page.getByRole("button", { name: "Fire breach charge" }).click();
+  await expect(page.getByTestId("goal-status")).toHaveText("Mission complete");
+  await expect(page.getByTestId("broken-spring-count")).toHaveText("4");
+  await expect(page.getByTestId("contact-count")).not.toHaveText("0");
+  expect(pageErrors).toEqual([]);
+});
+
 test("Reset restores the initial multi-body scene", async ({ page }) => {
   const pageErrors = await openToy(page);
   await page.getByRole("button", { name: "Step" }).click();
@@ -99,7 +114,7 @@ test("Play and Pause retain one accessible control set without page errors", asy
   const pageErrors = await openToy(page);
   await page.getByRole("button", { name: "Play" }).click();
   await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
-  await expect(page.getByRole("button")).toHaveCount(13);
+  await expect(page.getByRole("button")).toHaveCount(15);
   await page.getByRole("button", { name: "Pause" }).click();
   await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
   expect(pageErrors).toEqual([]);

@@ -5,10 +5,11 @@ tested 2D math/geometry library, a headless physics library, then a browser
 game that consumes them. It asks how small explicit rules can create deformable
 worlds that remain fun, inspectable, and explainable.
 
-The current vertical slice is an interactable arena containing two generated
-soft bodies. Its browser controls issue deterministic game commands; the game
+The current vertical slice is **Breach Run**: an interactable mission with a
+player-fired ram, weak soft-body wall, hanging rope counterweight, and bounded
+arena. Its browser controls issue deterministic game commands; the game
 delegates to physics; physics uses the public math layer and returns the
-springs, contacts, corrections, and state the browser displays.
+springs, contacts, corrections, fracture, and state the browser displays.
 
 ## Run locally
 
@@ -42,10 +43,12 @@ Open `dist/index.html` after building.
 - a named pinned-rope swing scene with a state-derived target goal.
 - a named pinned-sheet lift scene with a deterministic lower-edge target.
 - a named block-and-ram scene whose outcome requires returned particle contact.
+- Breach Run, a composite mission where Fire breach charge physically contacts
+  and breaks the goal seam in a multi-body arena.
 
-This is not yet a complete soft-body game. Phases 1–7 prove the layers compose
-correctly; named playable rope, sheet, block, weak-wall, and ram scenes are
-next.
+This is still a compact soft-body game proof, not a general engine. Phases 1–8
+establish the reusable layers; Breach Run proves that those layers can support
+a composite player goal without speculative solver expansion.
 
 ## Read deeper
 
@@ -68,5 +71,6 @@ next.
 
 ## Next small step
 
-Phases 1–8 are complete. Future features begin only from a concrete scene need
-and a fresh design, rather than expanding the solver speculatively.
+Phases 1–8 are complete; Breach Run is the first scene-led extension. Future
+features begin only from a concrete scene need and a fresh design, rather than
+expanding the solver speculatively.

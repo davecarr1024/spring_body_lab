@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { vec2 } from "../../src/math/index.js";
-import { advanceGame, createBlockRam, createMultiBodyLab, createRopeSwing, createSheetLift, createSpringToy, createWeakWallBreach, launchRam, liftSheet, ramWeakWall, shareSceneRecipe, swingRope } from "../../src/game/index.js";
+import { advanceGame, createBlockRam, createBreachRun, createMultiBodyLab, createRopeSwing, createSheetLift, createSpringToy, createWeakWallBreach, fireBreachCharge, launchRam, liftSheet, ramWeakWall, shareSceneRecipe, swingRope } from "../../src/game/index.js";
+import { replayTrace } from "../../src/physics/index.js";
 
 test("the game slice consumes a valid physics world and records its command", () => {
   const game = createSpringToy();
@@ -86,4 +87,16 @@ test("scene recipes are stable portable definition records", () => {
   const recipe = shareSceneRecipe(scene);
   assert.equal(recipe, shareSceneRecipe(createRopeSwing()));
   assert.deepEqual(JSON.parse(recipe), { format: "spring-body-lab/scene@1", scene: "rope-swing", definition: scene.definition });
+});
+
+test("Breach Run combines a ram, weak wall, rope, and arena into one goal-driven mission", () => {
+  const mission = createBreachRun();
+  assert.equal(mission.definition.fixedSegments.length, 3);
+  assert.equal(mission.bodies.length, 2);
+  assert.equal(mission.goal.requiredSpringIds.length, 4);
+  const result = fireBreachCharge(mission);
+  assert.equal(result.game.goal.achieved, true);
+  assert.deepEqual(result.result.events.map((event) => event.springId), mission.goal.requiredSpringIds);
+  assert.deepEqual(replayTrace(result.game.trace), result.game.trace);
+  assert.deepEqual(fireBreachCharge(createBreachRun()), result);
 });

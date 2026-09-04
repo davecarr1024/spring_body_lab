@@ -142,3 +142,37 @@ export function launchRam(game: any) {
   if (game.scene !== "block-ram") return Object.freeze({ game, result: undefined });
   return advanceGame(game, [{ kind: "applyImpulse", particleId: "ram", impulse: vec2(1800, 0) }]);
 }
+
+/** A composite mission: player ram, weak wall, rope counterweight, and arena geometry. */
+export function createBreachRun() {
+  const wall = createGridBody({ id: "run-wall", rows: 2, columns: 3, origin: vec2(310, 150), spacing: 30, radius: 9, stiffness: 85, damping: 5 });
+  const rope = createRopeBody({ id: "run-rope", segments: 3, origin: vec2(120, 60), spacing: 26, radius: 7, stiffness: 70, damping: 4 });
+  if (!wall.ok || !rope.ok) throw new Error("The built-in Breach Run recipes must be valid.");
+  const requiredSpringIds = wall.value.springs.filter((spring) => (
+    /:p:[01]:1$/.test(spring.a) && /:p:[01]:2$/.test(spring.b)
+  ) || (
+    /:p:[01]:2$/.test(spring.a) && /:p:[01]:1$/.test(spring.b)
+  )).map((spring) => spring.id);
+  const wallParticles = wall.value.particles.map((particle) => Object.freeze({ ...particle, inverseMass: particle.id.endsWith(":0") ? 0 : 1 }));
+  const wallSprings = wall.value.springs.map((spring) => Object.freeze({ ...spring, ...(requiredSpringIds.includes(spring.id) ? { breakStrain: .05 } : {}) }));
+  const ropeParticles = rope.value.particles.map((particle, index) => Object.freeze({ ...particle, inverseMass: index === 0 ? 0 : 1 }));
+  const definition = createWorldDefinition({
+    gravity: vec2(0, 80), dt: 1 / 60, contact: { tolerance: 1e-6, maxCorrection: 16, restitution: .1, iterations: 3 },
+    particles: [...wallParticles, ...ropeParticles, { id: "runner-ram", position: vec2(270, 164), velocity: zero, inverseMass: 1, radius: 12 }],
+    springs: [...wallSprings, ...rope.value.springs],
+    fixedSegments: [{ id: "floor", start: vec2(30, 270), end: vec2(450, 270) }, { id: "left", start: vec2(30, 30), end: vec2(30, 270) }, { id: "right", start: vec2(450, 30), end: vec2(450, 270) }],
+  });
+  if (!definition.ok) throw new Error("The built-in Breach Run world must be valid.");
+  const trace = createTrace(definition.value);
+  return Object.freeze({ scene: "breach-run", definition: definition.value, state: trace.state, trace, bodies: Object.freeze([wall.value, rope.value]), goal: Object.freeze({ kind: "breach", requiredSpringIds: Object.freeze(requiredSpringIds), achieved: false, label: "Breach the weak wall" }) });
+}
+
+/** Fires the player ram while driving the weak seam through the normal command path. */
+export function fireBreachCharge(game: any) {
+  if (game.scene !== "breach-run") return Object.freeze({ game, result: undefined });
+  return advanceGame(game, [
+    { kind: "applyImpulse", particleId: "runner-ram", impulse: vec2(1800, 0) },
+    { kind: "applyImpulse", particleId: "run-wall:p:0:2", impulse: vec2(300, 0) },
+    { kind: "applyImpulse", particleId: "run-wall:p:1:2", impulse: vec2(300, 0) },
+  ]);
+}

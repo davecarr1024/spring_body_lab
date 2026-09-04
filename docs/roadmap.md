@@ -85,6 +85,18 @@ replayable goal evidence. A block-and-ram scene proves a distinct physical ram
 contact through returned narrow-phase evidence. Every scene also has a stable
 portable definition recipe and the browser exposes returned diagnostics.
 
+## Phase 9 — Breach Run mission (complete)
+
+**Deliverable:** a composite interactive scene that joins a player-fired ram,
+weak soft-body wall, hanging rope counterweight, bounded arena, and an explicit
+breach objective.
+
+**Evidence:** Fire breach charge records public impulses, produces returned
+particle contact and four named seam-break events, completes the game-owned
+goal, and replays identically. The browser test loads the mission, asserts its
+multi-body composition and objective, fires the action, then observes mission
+completion and fracture evidence from the built artifact.
+
 ## Deferred proposals
 
 3D, fluid/shader work, rich fracture, continuous collision, alternative

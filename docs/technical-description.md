@@ -73,8 +73,10 @@ structured `invalid_command` diagnostics without advancing an invalid impulse.
 `createTrace` owns a definition, initial state, current state, and immutable
 ordered entries. `appendTraceStep` freezes a command record alongside the
 pre-step index and returned `StepResult`. `replayTrace` starts at the retained
-initial state and reconstructs the complete trace from those records. This is
-in-memory replay evidence; serialization/persistence is deliberately deferred.
+initial state and reconstructs the complete trace from those records.
+`serializeTrace` writes the definition and ordered command entries using the
+versioned `spring-body-lab/trace@1` format; `deserializeTrace` validates that
+format and reconstructs its trace only by public replay.
 
 After integration, fixed geometry uses public point-to-segment distance
 evidence. Particle-pair candidates come from a deterministic uniform grid;
@@ -102,6 +104,10 @@ returned tail position; its named action also maps only to an impulse.
 `createSheetLift` consumes a grid recipe, pins its upper edge, and derives its
 goal from both returned lower-edge positions after `liftSheet` emits two public
 impulses.
+`createBreachRun` composes a pinned weak wall, a pinned rope counterweight, a
+player ram, and three fixed arena segments. `fireBreachCharge` records only
+public impulses; its outcome is derived from returned contact and fracture
+evidence, and its breach goal belongs to the game record rather than the DOM.
 The browser loads each scene and renders returned state, springs, contacts,
 normals, breaks, components, and goal status—it does not infer outcomes
 privately.
@@ -119,7 +125,7 @@ see [browser-testing.md](browser-testing.md).
 
 `npm run typecheck` validates TypeScript source. `npm test` runs tests split by math, physics, and game layer. `npm run
 coverage` runs the same suite with Node's coverage report. `npm run
-test:browser` runs the five built-artifact Playwright smoke tests. `npm run
+test:browser` runs the ten built-artifact Playwright smoke tests. `npm run
 check` runs coverage then the browser suite. The current headless
 production modules have 100% line/function coverage; branch coverage is
 reported and should increase as validation/replay cases are added.
