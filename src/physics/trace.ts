@@ -1,5 +1,6 @@
 import { isFiniteVec2, vec2 } from "../math/vec2.js";
-import { createInitialState, step } from "./world.js";
+import { diagnostic } from "../math/scalar.js";
+import { createInitialState, createWorldDefinition, step } from "./world.js";
 
 const freezeList = (values) => Object.freeze([...values]);
 
@@ -35,4 +36,26 @@ export function replayTrace(trace: any) {
     (replayed, entry) => appendTraceStep(replayed, entry.commands).trace,
     createTrace(trace.definition, trace.initialState),
   );
+}
+
+/** Serializes the portable recipe and command facts, never derived runtime snapshots. */
+export function serializeTrace(trace: any): string {
+  return JSON.stringify(Object.freeze({ format: "spring-body-lab/trace@1", definition: trace.definition, entries: trace.entries.map((entry: any) => entry.commands) }));
+}
+
+/** Rebuilds trace evidence from commands so stored runtime state is never trusted. */
+export function deserializeTrace(serialized: string) {
+  try {
+    const parsed = JSON.parse(serialized);
+    if (parsed?.format !== "spring-body-lab/trace@1" || !Array.isArray(parsed.entries)) throw new Error("format");
+    const definition = createWorldDefinition(parsed.definition);
+    if (definition.ok === false) return Object.freeze({ ok: false, diagnostics: definition.diagnostics });
+    const trace = parsed.entries.reduce((current: any, commands: any) => {
+      if (!Array.isArray(commands)) throw new Error("commands");
+      return appendTraceStep(current, commands).trace;
+    }, createTrace(definition.value));
+    return Object.freeze({ ok: true, value: trace });
+  } catch {
+    return Object.freeze({ ok: false, diagnostics: freezeList([diagnostic("invalid_trace", "trace", "Trace data must use the supported format with a valid definition and command arrays.")]) });
+  }
 }

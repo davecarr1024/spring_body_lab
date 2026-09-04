@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { vec2, zero } from "../../src/math/index.js";
-import { appendTraceStep, createInitialState, createTrace, createWorldDefinition, replayTrace, step } from "../../src/physics/index.js";
+import { appendTraceStep, createInitialState, createTrace, createWorldDefinition, deserializeTrace, replayTrace, serializeTrace, step } from "../../src/physics/index.js";
 
 function world(overrides = {}) {
   return createWorldDefinition({ gravity: zero, dt: .1, particles: [
@@ -56,6 +56,11 @@ test("traces retain immutable step-indexed commands and replay their evidence", 
   assert.equal(Object.isFrozen(trace.trace.entries[0].commands[0]), true);
   assert.deepEqual(trace.trace.entries[0].commands[0].impulse, vec2(2, 0));
   assert.deepEqual(replayTrace(trace.trace), trace.trace);
+  const restored = deserializeTrace(serializeTrace(trace.trace));
+  assert.equal(restored.ok, true);
+  assert.deepEqual(restored.value, trace.trace);
+  assert.equal(deserializeTrace("not json").ok, false);
+  assert.equal(deserializeTrace(JSON.stringify({ format: "wrong", entries: [] })).ok, false);
 });
 
 test("fixed segments return bounded correction and velocity evidence", () => {

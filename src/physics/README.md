@@ -35,4 +35,6 @@ order.
 
 `body.ts` provides deterministic rectangular-grid and one-dimensional rope
 recipes, while `trace.ts` records normalized commands and recomputes the full
-sequence for replay verification.
+sequence for replay verification. `serializeTrace` and `deserializeTrace`
+persist only the definition and commands, then rebuild the evidence rather
+than trusting a stored mutable state snapshot.
