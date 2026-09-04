@@ -1,4 +1,4 @@
-import { advanceGame, createBlockRam, createMultiBodyLab, createRopeSwing, createSheetLift, createWeakWallBreach, launchRam, liftSheet, ramWeakWall, swingRope } from "../game/index.js";
+import { advanceGame, createBlockRam, createMultiBodyLab, createRopeSwing, createSheetLift, createWeakWallBreach, launchRam, liftSheet, ramWeakWall, shareSceneRecipe, swingRope } from "../game/index.js";
 import { vec2 } from "../math/index.js";
 
 let game: any = createMultiBodyLab();
@@ -13,7 +13,7 @@ const goalStatus = () => !game.goal ? "Inspect forces and contact" : game.goal.k
 
 function evidence() {
   const contacts = game.lastResult?.contacts ?? [];
-  return Object.freeze({ contacts, latest: contacts.at(-1), events: game.lastResult?.events ?? [] });
+  return Object.freeze({ contacts, latest: contacts.at(-1), events: game.lastResult?.events ?? [], diagnostics: game.lastResult?.diagnostics ?? [] });
 }
 
 function sceneMarkup() {
@@ -32,7 +32,8 @@ function sceneMarkup() {
 function render() {
   const contactEvidence = evidence();
   const latest = contactEvidence.latest;
-  document.querySelector("#app")!.innerHTML = `<main><header><p>Spring Body Lab · ${sceneName()}</p><h1>Deformable bodies, visible causes.</h1><span>Browser → game → physics → math</span></header><section>${sceneMarkup()}<div class="controls"><button id="step">Step</button><button id="play">${playing ? "Pause" : "Play"}</button><button id="nudge-amber">Nudge amber</button><button id="nudge-blue">Nudge blue</button><button id="weak-wall">Load weak wall</button><button id="ram-wall">Ram wall</button><button id="rope">Load rope</button><button id="swing-rope">Swing rope</button><button id="sheet">Load sheet</button><button id="lift-sheet">Lift sheet</button><button id="block-ram">Load block ram</button><button id="launch-ram">Launch ram</button><button id="reset">Reset</button></div><dl><div><dt>scene</dt><dd data-testid="scene-name">${sceneName()}</dd></div><div><dt>goal</dt><dd data-testid="goal-status">${goalStatus()}</dd></div><div><dt>step</dt><dd data-testid="step-value">${game.state.stepIndex}</dd></div><div><dt>bodies</dt><dd data-testid="body-count">${game.bodies.length}</dd></div><div><dt>particles</dt><dd data-testid="particle-count">${game.state.particles.length}</dd></div><div><dt>components</dt><dd data-testid="component-count">${game.state.components.length}</dd></div><div><dt>broken springs</dt><dd data-testid="broken-spring-count">${game.state.brokenSpringIds.length}</dd></div><div><dt>breaks this step</dt><dd data-testid="break-count">${contactEvidence.events.length}</dd></div><div><dt>contacts this step</dt><dd data-testid="contact-count">${contactEvidence.contacts.length}</dd></div><div><dt>latest contact</dt><dd data-testid="latest-contact">${latest ? latest.kind : "none"}</dd></div></dl><p class="note">Springs, circles, contact normals, strain breaks, components, and goal state are returned physics/game evidence. The browser only renders the game record.</p></section></main>`;
+  const recipe = shareSceneRecipe(game);
+  document.querySelector("#app")!.innerHTML = `<main><header><p>Spring Body Lab · ${sceneName()}</p><h1>Deformable bodies, visible causes.</h1><span>Browser → game → physics → math</span></header><section>${sceneMarkup()}<div class="controls"><button id="step">Step</button><button id="play">${playing ? "Pause" : "Play"}</button><button id="nudge-amber">Nudge amber</button><button id="nudge-blue">Nudge blue</button><button id="weak-wall">Load weak wall</button><button id="ram-wall">Ram wall</button><button id="rope">Load rope</button><button id="swing-rope">Swing rope</button><button id="sheet">Load sheet</button><button id="lift-sheet">Lift sheet</button><button id="block-ram">Load block ram</button><button id="launch-ram">Launch ram</button><button id="reset">Reset</button></div><dl><div><dt>scene</dt><dd data-testid="scene-name">${sceneName()}</dd></div><div><dt>goal</dt><dd data-testid="goal-status">${goalStatus()}</dd></div><div><dt>step</dt><dd data-testid="step-value">${game.state.stepIndex}</dd></div><div><dt>bodies</dt><dd data-testid="body-count">${game.bodies.length}</dd></div><div><dt>particles</dt><dd data-testid="particle-count">${game.state.particles.length}</dd></div><div><dt>components</dt><dd data-testid="component-count">${game.state.components.length}</dd></div><div><dt>broken springs</dt><dd data-testid="broken-spring-count">${game.state.brokenSpringIds.length}</dd></div><div><dt>breaks this step</dt><dd data-testid="break-count">${contactEvidence.events.length}</dd></div><div><dt>diagnostics this step</dt><dd data-testid="diagnostic-count">${contactEvidence.diagnostics.length}</dd></div><div><dt>shareable recipe bytes</dt><dd data-testid="recipe-size">${recipe.length}</dd></div><div><dt>contacts this step</dt><dd data-testid="contact-count">${contactEvidence.contacts.length}</dd></div><div><dt>latest contact</dt><dd data-testid="latest-contact">${latest ? latest.kind : "none"}</dd></div></dl><p class="note">Springs, circles, contact normals, diagnostics, strain breaks, components, goals, and portable recipes are returned physics/game evidence. The browser only renders the game record.</p></section></main>`;
   document.querySelector("#step")!.addEventListener("click", () => tick());
   document.querySelector("#play")!.addEventListener("click", () => { playing = !playing; if (playing) frame = requestAnimationFrame(animate); render(); });
   document.querySelector("#nudge-amber")!.addEventListener("click", () => tick([{ kind: "applyImpulse", particleId: "amber:p:0:0", impulse: vec2(90, -80) }]));
@@ -89,6 +90,8 @@ function updateEvidence() {
   document.querySelector("[data-testid=component-count]")!.textContent = String(game.state.components.length);
   document.querySelector("[data-testid=broken-spring-count]")!.textContent = String(game.state.brokenSpringIds.length);
   document.querySelector("[data-testid=break-count]")!.textContent = String(contactEvidence.events.length);
+  document.querySelector("[data-testid=diagnostic-count]")!.textContent = String(contactEvidence.diagnostics.length);
+  document.querySelector("[data-testid=recipe-size]")!.textContent = String(shareSceneRecipe(game).length);
   document.querySelector("[data-testid=goal-status]")!.textContent = goalStatus();
 }
 

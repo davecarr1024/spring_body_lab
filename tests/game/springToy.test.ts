@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { vec2 } from "../../src/math/index.js";
-import { advanceGame, createBlockRam, createMultiBodyLab, createRopeSwing, createSheetLift, createSpringToy, createWeakWallBreach, launchRam, liftSheet, ramWeakWall, swingRope } from "../../src/game/index.js";
+import { advanceGame, createBlockRam, createMultiBodyLab, createRopeSwing, createSheetLift, createSpringToy, createWeakWallBreach, launchRam, liftSheet, ramWeakWall, shareSceneRecipe, swingRope } from "../../src/game/index.js";
 
 test("the game slice consumes a valid physics world and records its command", () => {
   const game = createSpringToy();
@@ -79,4 +79,11 @@ test("the block-ram scene derives success from a returned particle contact", () 
   assert.equal(rammed.result.contacts.some((contact) => contact.kind === "particle_particle" && contact.particleIds.includes("ram")), true);
   assert.deepEqual(launchRam(createBlockRam()), rammed);
   assert.equal(launchRam(createSheetLift()).result, undefined);
+});
+
+test("scene recipes are stable portable definition records", () => {
+  const scene = createRopeSwing();
+  const recipe = shareSceneRecipe(scene);
+  assert.equal(recipe, shareSceneRecipe(createRopeSwing()));
+  assert.deepEqual(JSON.parse(recipe), { format: "spring-body-lab/scene@1", scene: "rope-swing", definition: scene.definition });
 });

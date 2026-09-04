@@ -43,6 +43,11 @@ export function advanceGame(game: any, commands: any[] = []) {
   return Object.freeze({ game: Object.freeze({ ...game, state: advancedTrace.trace.state, trace: advancedTrace.trace, ...(goal ? { goal } : {}) }), result: advancedTrace.result });
 }
 
+/** Produces a stable, portable scene recipe without serializing mutable runtime state. */
+export function shareSceneRecipe(game: any): string {
+  return JSON.stringify(Object.freeze({ format: "spring-body-lab/scene@1", scene: game.scene, definition: game.definition }));
+}
+
 function goalAchieved(goal: any, state: any, result: any) {
   if (goal.kind === "breach") return goal.requiredSpringIds.every((springId: string) => state.brokenSpringIds.includes(springId));
   if (goal.kind === "reach_x") return state.particles.find((particle: any) => particle.id === goal.particleId)?.position.x >= goal.minimumX;

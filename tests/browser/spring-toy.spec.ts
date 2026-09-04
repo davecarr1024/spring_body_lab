@@ -18,6 +18,8 @@ test("the built browser artifact presents the initial multiple-body lab", async 
   await expect(page.getByTestId("particle-count")).toHaveText("8");
   await expect(page.getByTestId("component-count")).toHaveText("2");
   await expect(page.getByTestId("broken-spring-count")).toHaveText("0");
+  await expect(page.getByTestId("diagnostic-count")).toHaveText("0");
+  await expect(page.getByTestId("recipe-size")).toHaveText(/\d+/);
   expect(pageErrors).toEqual([]);
 });
 

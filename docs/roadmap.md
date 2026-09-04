@@ -82,7 +82,8 @@ one deterministic step returns four break events, splits the wall, marks the
 goal achieved, and replays identically. The browser exposes and tests this
 path. Named pinned rope/swing and sheet/lift scenes now provide the same
 replayable goal evidence. A block-and-ram scene proves a distinct physical ram
-contact through returned narrow-phase evidence.
+contact through returned narrow-phase evidence. Every scene also has a stable
+portable definition recipe and the browser exposes returned diagnostics.
 
 ## Deferred proposals
 
