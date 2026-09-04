@@ -71,13 +71,17 @@ applies no future force, splits stable components, and remains replayable
 without non-finite state. The browser renders broken seams and returned break/
 component evidence.
 
-## Phase 8 — Soft-body game
+## Phase 8 — Soft-body game (first slice complete)
 
 **Deliverable:** named rope, sheet, block, weak-wall, and ram scenes with
 player goals, replay, pause/step, diagnostics, and recipe sharing.
 
-**Evidence:** a player can create a reproducible breach or construction result
-whose action trace and physics evidence explain the outcome.
+**Evidence so far:** the named weak-wall scene carries an explicit set of weak
+seam IDs and a breach goal. Its Ram action maps to recorded physics impulses;
+one deterministic step returns four break events, splits the wall, marks the
+goal achieved, and replays identically. The browser exposes and tests this
+path. Rope, sheet, block, and a distinct ram scene remain required to complete
+the phase.
 
 ## Deferred proposals
 

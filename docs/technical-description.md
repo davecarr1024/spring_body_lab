@@ -92,10 +92,13 @@ the immutable trace and is verified by replay.
 ## Game and browser
 
 `createSpringToy` remains a small compatibility probe. `createMultiBodyLab`
-builds two deterministic grid bodies in a floor-and-wall arena. `advanceGame`
-preserves the definition, delegates to `step`, and records command facts. The
-browser emits `applyImpulse` or no command, then renders returned state,
-springs, contacts, and normals.
+builds two deterministic grid bodies in a floor-and-wall arena.
+`createWeakWallBreach` builds a partially pinned grid wall whose four named
+seams have a break threshold. Its game-owned `ramWeakWall` action maps to two
+recorded public impulses; `advanceGame` derives an immutable game goal result
+from the physics state's broken spring IDs. The browser loads either scene and
+renders returned state, springs, contacts, normals, breaks, components, and
+goal status—it does not infer a breach privately.
 
 `scripts/build.mjs` invokes TypeScript into `dist/src/`, copies the browser
 stylesheet, and writes the static page. `dist/` is generated and not

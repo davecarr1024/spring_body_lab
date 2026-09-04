@@ -36,7 +36,9 @@ Open `dist/index.html` after building.
 - deterministic rectangular soft-body recipes with structural/diagonal springs
   and faces; and
 - an interactable browser arena with two bodies, fixed walls/floor, Nudge,
-  Step, Play/Pause, Reset, and returned contact-normal rendering.
+  Step, Play/Pause, Reset, and returned contact-normal rendering; and
+- a named weak-wall breach scene whose Ram action creates a deterministic,
+  replayable fracture outcome from returned physics evidence.
 
 This is not yet a complete soft-body game. Phases 1–7 prove the layers compose
 correctly; named playable rope, sheet, block, weak-wall, and ram scenes are
@@ -63,5 +65,5 @@ next.
 
 ## Next small step
 
-Build the first named soft-body game scene on the fracture-capable library,
-starting with a reproducible weak-wall breach.
+Extend the game vocabulary with named rope, sheet, block, and ram scenes while
+keeping goals and replay evidence as explicit as the weak-wall breach.

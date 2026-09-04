@@ -34,10 +34,42 @@ export function createMultiBodyLab() {
   });
   if (!definition.ok) throw new Error("The built-in multi-body lab must be valid.");
   const trace = createTrace(definition.value);
-  return Object.freeze({ definition: definition.value, state: trace.state, trace, bodies: Object.freeze([left.value, right.value]) });
+  return Object.freeze({ scene: "multi-body-lab", definition: definition.value, state: trace.state, trace, bodies: Object.freeze([left.value, right.value]) });
 }
 
 export function advanceGame(game: any, commands: any[] = []) {
   const advancedTrace = appendTraceStep(game.trace, commands);
-  return Object.freeze({ game: Object.freeze({ definition: game.definition, state: advancedTrace.trace.state, trace: advancedTrace.trace, bodies: game.bodies }), result: advancedTrace.result });
+  const goal = game.goal && Object.freeze({ ...game.goal, achieved: game.goal.requiredSpringIds.every((springId: string) => advancedTrace.trace.state.brokenSpringIds.includes(springId)) });
+  return Object.freeze({ game: Object.freeze({ ...game, state: advancedTrace.trace.state, trace: advancedTrace.trace, ...(goal ? { goal } : {}) }), result: advancedTrace.result });
+}
+
+/** Builds a reproducible player-sized fracture puzzle from a generated wall. */
+export function createWeakWallBreach() {
+  const recipe = createGridBody({ id: "wall", rows: 2, columns: 3, origin: vec2(230, 120), spacing: 30, radius: 8, stiffness: 85, damping: 5 });
+  if (!recipe.ok) throw new Error("The built-in weak wall recipe must be valid.");
+  const particles = recipe.value.particles.map((particle) => Object.freeze({ ...particle, inverseMass: particle.id.endsWith(":0") ? 0 : 1 }));
+  const requiredSpringIds = recipe.value.springs
+    .filter((spring) => /:p:[01]:1$/.test(spring.a) && /:p:[01]:2$/.test(spring.b) || /:p:[01]:2$/.test(spring.a) && /:p:[01]:1$/.test(spring.b))
+    .map((spring) => spring.id);
+  const springs = recipe.value.springs.map((spring) => Object.freeze({ ...spring, ...(requiredSpringIds.includes(spring.id) ? { breakStrain: .05 } : {}) }));
+  const definition = createWorldDefinition({ gravity: zero, dt: 1 / 60, particles, springs });
+  if (!definition.ok) throw new Error("The built-in weak wall world must be valid.");
+  const trace = createTrace(definition.value);
+  return Object.freeze({
+    scene: "weak-wall-breach",
+    definition: definition.value,
+    state: trace.state,
+    trace,
+    bodies: Object.freeze([recipe.value]),
+    goal: Object.freeze({ kind: "breach", requiredSpringIds: Object.freeze(requiredSpringIds), achieved: false }),
+  });
+}
+
+/** The game action maps a named ram hit to two public physics impulses. */
+export function ramWeakWall(game: any) {
+  if (game.scene !== "weak-wall-breach") return Object.freeze({ game, result: undefined });
+  return advanceGame(game, [
+    { kind: "applyImpulse", particleId: "wall:p:0:2", impulse: vec2(300, 0) },
+    { kind: "applyImpulse", particleId: "wall:p:1:2", impulse: vec2(300, 0) },
+  ]);
 }
