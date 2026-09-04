@@ -68,5 +68,5 @@ next.
 
 ## Next small step
 
-Phase 8's named scenes are now in place; the next work is a completion audit
-and any evidence-driven physics-library gaps it exposes.
+Phases 1–8 are complete. Future features begin only from a concrete scene need
+and a fresh design, rather than expanding the solver speculatively.

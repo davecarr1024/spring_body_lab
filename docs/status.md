@@ -37,6 +37,6 @@ classification queries. New physics behavior must use that public boundary.
 
 ## Next smallest work
 
-Phases 1–7 are complete and Phase 8 has named weak-wall and rope scenes. The
-next smallest work is a deterministic block goal with the same replay evidence.
-See the [roadmap](roadmap.md) for the remaining gate.
+Phases 1–8 are complete. The library/game has reached its planned 2D soft-body
+scope; deferred proposals require a fresh design and a concrete scene need.
+See the [roadmap](roadmap.md) for those deliberate boundaries.
