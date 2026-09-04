@@ -5,23 +5,24 @@ import type { Component, PhysicsCommand, StepResult, WorldDefinition, WorldDefin
 
 const freezeList = (values) => Object.freeze([...values]);
 const negate = (value) => scale(value, -1);
-const defaultContact = Object.freeze({ tolerance: 1e-6, maxCorrection: 20, restitution: 0.2, iterations: 2, cellSize: 32 });
+const defaultContact = Object.freeze({ tolerance: 1e-6, maxCorrection: 20, restitution: 0.2, friction: .7, iterations: 2, cellSize: 32 });
 
 function validContactSettings(contact) {
   return contact && isFiniteNumber(contact.tolerance) && contact.tolerance >= 0
     && isFiniteNumber(contact.maxCorrection) && contact.maxCorrection > 0
     && isFiniteNumber(contact.restitution) && contact.restitution >= 0 && contact.restitution <= 1
+    && isFiniteNumber(contact.friction) && contact.friction >= 0 && contact.friction <= 1
     && Number.isInteger(contact.iterations) && contact.iterations > 0
     && isFiniteNumber(contact.cellSize) && contact.cellSize > 0;
 }
 
-export function createWorldDefinition({ particles = [], springs = [], fixedSegments = [], gravity = zero, dt = 1 / 60, contact = defaultContact }: any = {}): WorldDefinitionResult {
+export function createWorldDefinition({ particles = [], springs = [], constraints = [], fixedSegments = [], gravity = zero, dt = 1 / 60, contact = defaultContact }: any = {}): WorldDefinitionResult {
   const resolvedContact = { ...defaultContact, ...contact };
   const diagnostics = [];
   const ids = new Set();
   if (!Array.isArray(particles) || particles.length === 0) diagnostics.push(diagnostic("missing_particles", "particles", "A world needs at least one particle."));
   if (!isFiniteVec2(gravity) || !isFiniteNumber(dt) || dt <= 0) diagnostics.push(diagnostic("invalid_settings", "settings", "Gravity and a positive finite timestep are required."));
-  if (!validContactSettings(resolvedContact)) diagnostics.push(diagnostic("invalid_contact_settings", "contact", "Contact tolerance, correction bound, restitution, iterations, and cell size must be valid."));
+  if (!validContactSettings(resolvedContact)) diagnostics.push(diagnostic("invalid_contact_settings", "contact", "Contact tolerance, correction bound, restitution, friction, iterations, and cell size must be valid."));
   for (const particle of particles) {
     if (typeof particle.id !== "string" || ids.has(particle.id)) diagnostics.push(diagnostic("duplicate_or_invalid_particle", particle.id ?? "particle", "Particle IDs must be unique strings."));
     else ids.add(particle.id);
@@ -33,6 +34,12 @@ export function createWorldDefinition({ particles = [], springs = [], fixedSegme
     else springIds.add(spring.id);
     if (!ids.has(spring.a) || !ids.has(spring.b) || spring.a === spring.b || !isFiniteNumber(spring.restLength) || spring.restLength < 0 || !isFiniteNumber(spring.stiffness) || spring.stiffness < 0 || !isFiniteNumber(spring.damping) || spring.damping < 0 || (spring.breakStrain !== undefined && (!isFiniteNumber(spring.breakStrain) || spring.breakStrain < 0))) diagnostics.push(diagnostic("invalid_spring", spring.id ?? "spring", "Springs need distinct known endpoints, finite non-negative parameters, and an optional finite non-negative break strain."));
   }
+  const constraintIds = new Set();
+  for (const constraint of constraints) {
+    if (typeof constraint.id !== "string" || constraintIds.has(constraint.id)) diagnostics.push(diagnostic("duplicate_or_invalid_constraint", constraint.id ?? "constraint", "Constraint IDs must be unique strings."));
+    else constraintIds.add(constraint.id);
+    if (!ids.has(constraint.a) || !ids.has(constraint.b) || constraint.a === constraint.b || !isFiniteNumber(constraint.restLength) || constraint.restLength < 0 || !isFiniteNumber(constraint.stiffness) || constraint.stiffness < 0 || constraint.stiffness > 1) diagnostics.push(diagnostic("invalid_constraint", constraint.id ?? "constraint", "Constraints need distinct known endpoints, a finite non-negative rest length, and stiffness from zero through one."));
+  }
   const segmentIds = new Set();
   for (const fixed of fixedSegments) {
     if (typeof fixed.id !== "string" || segmentIds.has(fixed.id)) diagnostics.push(diagnostic("duplicate_or_invalid_segment", fixed.id ?? "segment", "Fixed segment IDs must be unique strings."));
@@ -40,7 +47,7 @@ export function createWorldDefinition({ particles = [], springs = [], fixedSegme
     if (!segment(fixed.start, fixed.end).ok) diagnostics.push(diagnostic("invalid_fixed_segment", fixed.id ?? "segment", "Fixed segments need finite endpoints."));
   }
   if (diagnostics.length > 0) return Object.freeze({ ok: false, diagnostics: freezeList(diagnostics) });
-  return Object.freeze({ ok: true, value: Object.freeze({ particles: freezeList(particles.map((particle) => Object.freeze({ ...particle, radius: particle.radius ?? 0 }))), springs: freezeList(springs.map((spring) => Object.freeze({ ...spring }))), fixedSegments: freezeList(fixedSegments.map((fixed) => Object.freeze({ ...fixed }))), gravity, dt, contact: Object.freeze(resolvedContact) }) }) as WorldDefinitionResult;
+  return Object.freeze({ ok: true, value: Object.freeze({ particles: freezeList(particles.map((particle) => Object.freeze({ ...particle, radius: particle.radius ?? 0 }))), springs: freezeList(springs.map((spring) => Object.freeze({ ...spring }))), constraints: freezeList(constraints.map((constraint) => Object.freeze({ ...constraint }))), fixedSegments: freezeList(fixedSegments.map((fixed) => Object.freeze({ ...fixed }))), gravity, dt, contact: Object.freeze(resolvedContact) }) }) as WorldDefinitionResult;
 }
 
 export function connectedComponents(definition: WorldDefinition, brokenSpringIds: readonly string[] = []): readonly Component[] {
@@ -98,6 +105,12 @@ function repairVelocity(velocity: any, normal: any, restitution: number) {
   return normalSpeed < 0 ? add(velocity, scale(normal, -(1 + restitution) * normalSpeed)) : velocity;
 }
 
+function frictionVelocity(velocity: any, normal: any, friction: number) {
+  const tangent = perpendicular(normal);
+  // Tangential damping is an explicit contact response, not renderer drag.
+  return add(velocity, scale(tangent, -dot(velocity, tangent) * friction));
+}
+
 function resolveFixedContact(particle: any, definitionParticle: any, fixed: any, settings: any) {
   if (definitionParticle.inverseMass === 0 || definitionParticle.radius === 0) return null;
   const closest = pointSegmentDistance(particle.position, fixed);
@@ -105,7 +118,7 @@ function resolveFixedContact(particle: any, definitionParticle: any, fixed: any,
   if (penetration < -settings.tolerance) return null;
   const normal = normalFromSegment(particle, fixed, closest);
   const correction = scale(normal, Math.min(settings.maxCorrection, Math.max(0, penetration)));
-  const velocity = repairVelocity(particle.velocity, normal, settings.restitution);
+  const velocity = frictionVelocity(repairVelocity(particle.velocity, normal, settings.restitution), normal, settings.friction);
   return Object.freeze({ particle: Object.freeze({ ...particle, position: add(particle.position, correction), velocity }), contact: Object.freeze({ kind: "particle_segment", particleId: particle.id, segmentId: fixed.id, point: closest.point, normal, penetration, correction, velocityDelta: subtract(velocity, particle.velocity) }) });
 }
 
@@ -125,9 +138,13 @@ function resolvePair(left: any, right: any, leftDefinition: any, rightDefinition
   const rightCorrection = scale(normal, correctionAmount * rightDefinition.inverseMass / inverseMass);
   const relativeNormalSpeed = dot(subtract(right.velocity, left.velocity), normal);
   const impulse = relativeNormalSpeed < 0 ? -(1 + settings.restitution) * relativeNormalSpeed / inverseMass : 0;
-  const leftVelocity = add(left.velocity, scale(normal, -impulse * leftDefinition.inverseMass));
-  const rightVelocity = add(right.velocity, scale(normal, impulse * rightDefinition.inverseMass));
-  return Object.freeze({ left: Object.freeze({ ...left, position: add(left.position, leftCorrection), velocity: leftVelocity }), right: Object.freeze({ ...right, position: add(right.position, rightCorrection), velocity: rightVelocity }), contact: Object.freeze({ kind: "particle_particle", particleIds: freezeList([left.id, right.id]), normal, penetration, corrections: freezeList([leftCorrection, rightCorrection]), impulse }) });
+  const leftNormalVelocity = add(left.velocity, scale(normal, -impulse * leftDefinition.inverseMass));
+  const rightNormalVelocity = add(right.velocity, scale(normal, impulse * rightDefinition.inverseMass));
+  const tangent = perpendicular(normal);
+  const tangentImpulse = -dot(subtract(rightNormalVelocity, leftNormalVelocity), tangent) * settings.friction / inverseMass;
+  const leftVelocity = add(leftNormalVelocity, scale(tangent, -tangentImpulse * leftDefinition.inverseMass));
+  const rightVelocity = add(rightNormalVelocity, scale(tangent, tangentImpulse * rightDefinition.inverseMass));
+  return Object.freeze({ left: Object.freeze({ ...left, position: add(left.position, leftCorrection), velocity: leftVelocity }), right: Object.freeze({ ...right, position: add(right.position, rightCorrection), velocity: rightVelocity }), contact: Object.freeze({ kind: "particle_particle", particleIds: freezeList([left.id, right.id]), normal, penetration, corrections: freezeList([leftCorrection, rightCorrection]), impulse, tangentImpulse }) });
 }
 
 function pairKey(left: string, right: string) { return left < right ? `${left}|${right}` : `${right}|${left}`; }
@@ -177,6 +194,26 @@ function solveContacts(particles: any[], definition: any, contacts: any[]) {
   return solved;
 }
 
+function solveConstraints(particles: any[], definition: any, records: any[]) {
+  let solved = particles;
+  for (const constraint of definition.constraints) {
+    const leftIndex = solved.findIndex((particle) => particle.id === constraint.a);
+    const rightIndex = solved.findIndex((particle) => particle.id === constraint.b);
+    const left = solved[leftIndex]; const right = solved[rightIndex];
+    const unit = normalize(subtract(right.position, left.position));
+    const leftMass = definition.particles[leftIndex].inverseMass; const rightMass = definition.particles[rightIndex].inverseMass;
+    const inverseMass = leftMass + rightMass;
+    if (unit.kind === "degenerate" || inverseMass === 0) { records.push(Object.freeze({ constraintId: constraint.id, extension: 0, corrections: freezeList([zero, zero]) })); continue; }
+    const extension = length(subtract(right.position, left.position)) - constraint.restLength;
+    const correction = extension * constraint.stiffness;
+    const leftCorrection = scale(unit.value, correction * leftMass / inverseMass);
+    const rightCorrection = negate(scale(unit.value, correction * rightMass / inverseMass));
+    records.push(Object.freeze({ constraintId: constraint.id, extension, corrections: freezeList([leftCorrection, rightCorrection]) }));
+    solved = solved.map((particle, index) => index === leftIndex ? Object.freeze({ ...particle, position: add(particle.position, leftCorrection) }) : index === rightIndex ? Object.freeze({ ...particle, position: add(particle.position, rightCorrection) }) : particle);
+  }
+  return solved;
+}
+
 export function step(definition: WorldDefinition, state: WorldState, commands: ReadonlyArray<PhysicsCommand> = []): StepResult {
   const byId = new Map<string, any>(definition.particles.map((particle: any) => [particle.id, particle]));
   const commandDiagnostics = [];
@@ -217,7 +254,8 @@ export function step(definition: WorldDefinition, state: WorldState, commands: R
     return Object.freeze({ id: stateParticle.id, velocity, position: add(stateParticle.position, scale(velocity, definition.dt)) });
   });
   const contacts = [];
-  const solvedParticles = solveContacts(particles, definition, contacts);
+  const constraintRecords = [];
+  const solvedParticles = solveConstraints(solveContacts(particles, definition, contacts), definition, constraintRecords);
   const solvedById = new Map(solvedParticles.map((particle) => [particle.id, particle]));
   const breakEvents = definition.springs.flatMap((spring) => {
     if (state.brokenSpringIds.includes(spring.id) || spring.breakStrain === undefined || spring.restLength === 0) return [];
@@ -229,5 +267,5 @@ export function step(definition: WorldDefinition, state: WorldState, commands: R
   const brokenSpringIds = freezeList([...state.brokenSpringIds, ...breakEvents.map((event) => event.springId)]);
   const components = connectedComponents(definition, brokenSpringIds);
   const nextState = Object.freeze({ stepIndex: state.stepIndex + 1, particles: freezeList(solvedParticles), brokenSpringIds, components });
-  return Object.freeze({ state: nextState, forces: freezeList(springForces), contacts: freezeList(contacts), diagnostics: freezeList(commandDiagnostics), events: freezeList(breakEvents), components });
+  return Object.freeze({ state: nextState, forces: freezeList(springForces), contacts: freezeList(contacts), constraints: freezeList(constraintRecords), diagnostics: freezeList(commandDiagnostics), events: freezeList(breakEvents), components });
 }

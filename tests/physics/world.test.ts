@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { vec2, zero } from "../../src/math/index.js";
-import { appendTraceStep, createInitialState, createTrace, createWorldDefinition, deserializeTrace, replayTrace, serializeTrace, step } from "../../src/physics/index.js";
+import { appendTraceStep, createHeightfield, createInitialState, createTrace, createWorldDefinition, deserializeTrace, replayTrace, serializeTrace, step } from "../../src/physics/index.js";
 
 function world(overrides = {}) {
   return createWorldDefinition({ gravity: zero, dt: .1, particles: [
@@ -79,6 +79,29 @@ test("fixed segments return bounded correction and velocity evidence", () => {
   assert.equal(result.state.particles[0].position.y, 90);
   assert.equal(result.state.particles[0].velocity.y, -2);
   assert.equal(Object.isFrozen(contact), true);
+});
+
+test("heightfields produce ordered fixed terrain and contacts apply explicit friction", () => {
+  const terrain = createHeightfield({ id: "hills", points: [vec2(0, 100), vec2(20, 100), vec2(50, 110)] });
+  assert.equal(terrain.ok, true);
+  assert.deepEqual(terrain.value.segments.map((entry) => entry.id), ["hills:0", "hills:1"]);
+  assert.equal(createHeightfield({ points: [vec2(1, 0), vec2(1, 2)] }).ok, false);
+  const definition = createWorldDefinition({ gravity: zero, dt: .1, contact: { tolerance: 1e-6, maxCorrection: 10, restitution: 0, friction: .5, iterations: 1 }, particles: [{ id: "tire", position: vec2(10, 96), velocity: vec2(8, 10), inverseMass: 1, radius: 10 }], springs: [], fixedSegments: terrain.value.segments }).value;
+  const result = step(definition, createInitialState(definition));
+  assert.equal(result.contacts[0].kind, "particle_segment");
+  assert.equal(result.state.particles[0].velocity.x, 4);
+  assert.equal(result.state.particles[0].velocity.y, 0);
+});
+
+test("distance constraints hold a wheel mount independently from springs", () => {
+  const definition = createWorldDefinition({ gravity: zero, dt: .1, particles: [{ id: "chassis", position: zero, velocity: zero, inverseMass: 0 }, { id: "wheel", position: vec2(20, 0), velocity: zero, inverseMass: 1 }], springs: [], constraints: [{ id: "axle", a: "chassis", b: "wheel", restLength: 10, stiffness: 1 }] }).value;
+  const result = step(definition, createInitialState(definition));
+  assert.deepEqual(result.state.particles.map((particle) => particle.position), [zero, vec2(10, 0)]);
+  assert.equal(result.constraints[0].constraintId, "axle");
+  assert.equal(result.constraints[0].extension, 10);
+  assert.deepEqual(result.constraints[0].corrections[0], zero);
+  assert.equal(result.constraints[0].corrections[1].x, -10);
+  assert.equal(createWorldDefinition({ particles: [{ id: "a", position: zero, velocity: zero, inverseMass: 1 }], constraints: [{ id: "bad", a: "a", b: "a", restLength: 1, stiffness: 2 }] }).ok, false);
 });
 
 test("particle pairs separate deterministically and invalid contact structure is rejected", () => {

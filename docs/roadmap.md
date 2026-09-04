@@ -110,6 +110,16 @@ mouse interaction, clear feedback, focused controls, and textured face
 rendering. Renderer skins select CC0 texture assets by body ID without changing
 the physics recipe.
 
+## Phase 11 — Vehicle physics primitives (complete)
+
+**Deliverable:** deterministic heightfield terrain recipes, tangential contact
+friction, and distance constraints for suspension/axle mounts.
+
+**Evidence:** physics tests prove ordered terrain expansion, frictional contact
+velocity repair, hard pin-to-wheel distance correction, invalid constraint
+diagnostics, and the existing trace/replay contract. These are reusable engine
+facts; the driving game remains the next presentation consumer.
+
 ## Deferred proposals
 
 3D, fluid/shader work, rich fracture, continuous collision, alternative

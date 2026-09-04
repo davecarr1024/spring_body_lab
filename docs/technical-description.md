@@ -82,6 +82,13 @@ After integration, fixed geometry uses public point-to-segment distance
 evidence. Particle-pair candidates come from a deterministic uniform grid;
 direct spring neighbors are excluded before narrow phase. Contact records retain
 normal, penetration, bounded correction, and velocity repair/impulse.
+`createHeightfield` turns strictly X-ordered points into stable fixed-segment
+definitions. Contact settings include bounded tangential friction, which is
+applied in the physics response and recorded with the contact rather than being
+simulated by the renderer. World definitions may also include named distance
+constraints; after contact solve, each produces an extension and mass-weighted
+positional corrections. The driving scene uses these facts for terrain and
+wheel mounts.
 
 Each force record includes signed local strain when its rest length is nonzero;
 zero-rest and zero-direction cases retain explicit classifications. A spring
