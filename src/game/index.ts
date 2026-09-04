@@ -1,1 +1,1 @@
-export { advanceGame, createMultiBodyLab, createRopeSwing, createSpringToy, createWeakWallBreach, ramWeakWall, swingRope } from "./springToy.js";
+export { advanceGame, createMultiBodyLab, createRopeSwing, createSheetLift, createSpringToy, createWeakWallBreach, liftSheet, ramWeakWall, swingRope } from "./springToy.js";

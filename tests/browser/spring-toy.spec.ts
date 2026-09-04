@@ -62,6 +62,16 @@ test("the browser exposes a deterministic rope-swing goal", async ({ page }) => 
   expect(pageErrors).toEqual([]);
 });
 
+test("the browser exposes a deterministic sheet-lift goal", async ({ page }) => {
+  const pageErrors = await openToy(page);
+  await page.getByRole("button", { name: "Load sheet" }).click();
+  await expect(page.getByRole("img", { name: "Sheet lift arena" })).toBeVisible();
+  await expect(page.getByTestId("goal-status")).toHaveText("Lift sheet edge to marker");
+  await page.getByRole("button", { name: "Lift sheet" }).click();
+  await expect(page.getByTestId("goal-status")).toHaveText("Lift achieved");
+  expect(pageErrors).toEqual([]);
+});
+
 test("Reset restores the initial multi-body scene", async ({ page }) => {
   const pageErrors = await openToy(page);
   await page.getByRole("button", { name: "Step" }).click();
@@ -77,7 +87,7 @@ test("Play and Pause retain one accessible control set without page errors", asy
   const pageErrors = await openToy(page);
   await page.getByRole("button", { name: "Play" }).click();
   await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
-  await expect(page.getByRole("button")).toHaveCount(9);
+  await expect(page.getByRole("button")).toHaveCount(11);
   await page.getByRole("button", { name: "Pause" }).click();
   await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
   expect(pageErrors).toEqual([]);

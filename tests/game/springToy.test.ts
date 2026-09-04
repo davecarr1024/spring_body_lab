@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { vec2 } from "../../src/math/index.js";
-import { advanceGame, createMultiBodyLab, createRopeSwing, createSpringToy, createWeakWallBreach, ramWeakWall, swingRope } from "../../src/game/index.js";
+import { advanceGame, createMultiBodyLab, createRopeSwing, createSheetLift, createSpringToy, createWeakWallBreach, liftSheet, ramWeakWall, swingRope } from "../../src/game/index.js";
 
 test("the game slice consumes a valid physics world and records its command", () => {
   const game = createSpringToy();
@@ -61,4 +61,13 @@ test("unknown game goals remain unachieved rather than changing the physics step
   const rope = createRopeSwing();
   const unknownGoal = Object.freeze({ ...rope, goal: Object.freeze({ kind: "unknown", achieved: true }) });
   assert.equal(advanceGame(unknownGoal).game.goal.achieved, false);
+});
+
+test("the sheet scene lifts its lower edge to a deterministic state-derived goal", () => {
+  const sheet = createSheetLift();
+  const lifted = liftSheet(sheet);
+  assert.equal(lifted.game.goal.achieved, true);
+  assert.deepEqual(lifted.game.state.particles.filter((particle) => particle.id.startsWith("sheet:p:1:")).map((particle) => particle.position.y), [143, 143]);
+  assert.deepEqual(liftSheet(createSheetLift()), lifted);
+  assert.equal(liftSheet(createRopeSwing()).result, undefined);
 });

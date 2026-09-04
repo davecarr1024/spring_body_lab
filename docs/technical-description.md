@@ -99,6 +99,9 @@ recorded public impulses; `advanceGame` derives an immutable game goal result
 from the physics state's broken spring IDs. `createRopeSwing` consumes the
 physics rope recipe, pins its first particle, and derives a swing goal from the
 returned tail position; its named action also maps only to an impulse.
+`createSheetLift` consumes a grid recipe, pins its upper edge, and derives its
+goal from both returned lower-edge positions after `liftSheet` emits two public
+impulses.
 The browser loads each scene and renders returned state, springs, contacts,
 normals, breaks, components, and goal status—it does not infer outcomes
 privately.

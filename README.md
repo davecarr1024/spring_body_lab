@@ -40,6 +40,7 @@ Open `dist/index.html` after building.
 - a named weak-wall breach scene whose Ram action creates a deterministic,
   replayable fracture outcome from returned physics evidence; and
 - a named pinned-rope swing scene with a state-derived target goal.
+- a named pinned-sheet lift scene with a deterministic lower-edge target.
 
 This is not yet a complete soft-body game. Phases 1–7 prove the layers compose
 correctly; named playable rope, sheet, block, weak-wall, and ram scenes are
@@ -66,5 +67,5 @@ next.
 
 ## Next small step
 
-Add sheet, block, and a distinct ram scene while keeping goals and replay
-evidence as explicit as the weak-wall breach and rope swing.
+Add block and a distinct ram scene while keeping goals and replay evidence as
+explicit as the weak-wall breach, rope swing, and sheet lift.

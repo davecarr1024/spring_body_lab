@@ -46,6 +46,7 @@ export function advanceGame(game: any, commands: any[] = []) {
 function goalAchieved(goal: any, state: any) {
   if (goal.kind === "breach") return goal.requiredSpringIds.every((springId: string) => state.brokenSpringIds.includes(springId));
   if (goal.kind === "reach_x") return state.particles.find((particle: any) => particle.id === goal.particleId)?.position.x >= goal.minimumX;
+  if (goal.kind === "reach_y") return state.particles.every((particle: any) => !goal.particleIds.includes(particle.id) || particle.position.y <= goal.maximumY);
   return false;
 }
 
@@ -102,4 +103,20 @@ export function createRopeSwing() {
 export function swingRope(game: any) {
   if (game.scene !== "rope-swing") return Object.freeze({ game, result: undefined });
   return advanceGame(game, [{ kind: "applyImpulse", particleId: "rope:p:4", impulse: vec2(300, 0) }]);
+}
+
+/** Builds a pinned sheet whose lower edge can be lifted through game commands. */
+export function createSheetLift() {
+  const recipe = createGridBody({ id: "sheet", rows: 2, columns: 2, origin: vec2(250, 120), spacing: 28, radius: 7, stiffness: 80, damping: 5 });
+  if (!recipe.ok) throw new Error("The built-in sheet recipe must be valid.");
+  const particles = recipe.value.particles.map((particle) => Object.freeze({ ...particle, inverseMass: particle.id.startsWith("sheet:p:0:") ? 0 : 1 }));
+  const definition = createWorldDefinition({ gravity: zero, dt: 1 / 60, particles, springs: recipe.value.springs });
+  if (!definition.ok) throw new Error("The built-in sheet world must be valid.");
+  const trace = createTrace(definition.value);
+  return Object.freeze({ scene: "sheet-lift", definition: definition.value, state: trace.state, trace, bodies: Object.freeze([recipe.value]), goal: Object.freeze({ kind: "reach_y", particleIds: Object.freeze(["sheet:p:1:0", "sheet:p:1:1"]), maximumY: 143, achieved: false }) });
+}
+
+export function liftSheet(game: any) {
+  if (game.scene !== "sheet-lift") return Object.freeze({ game, result: undefined });
+  return advanceGame(game, [{ kind: "applyImpulse", particleId: "sheet:p:1:0", impulse: vec2(0, -300) }, { kind: "applyImpulse", particleId: "sheet:p:1:1", impulse: vec2(0, -300) }]);
 }
