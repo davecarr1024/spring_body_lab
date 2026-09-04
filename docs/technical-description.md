@@ -108,6 +108,15 @@ impulses.
 player ram, and three fixed arena segments. `fireBreachCharge` records only
 public impulses; its outcome is derived from returned contact and fracture
 evidence, and its breach goal belongs to the game record rather than the DOM.
+`createMossyardCourier` composes a player grid body, bramble body, garden
+boundaries, and a moon-gate delivery goal. `driveMossCourier` maps one input
+direction to immutable impulses across the player particles. The browser holds
+keyboard state or derives a pointer course, then repeatedly invokes that game
+action during real-time animation; it never writes particle state directly.
+`mossyard.html` is a focused entry point that boots this scene running.
+Renderer-owned `skins.ts` maps body IDs to texture, scale, outline, and node
+appearance. It fills generated body faces as SVG polygons, so changing a skin
+does not alter world definitions or the spring model.
 The browser loads each scene and renders returned state, springs, contacts,
 normals, breaks, components, and goal status—it does not infer outcomes
 privately.
@@ -125,7 +134,7 @@ see [browser-testing.md](browser-testing.md).
 
 `npm run typecheck` validates TypeScript source. `npm test` runs tests split by math, physics, and game layer. `npm run
 coverage` runs the same suite with Node's coverage report. `npm run
-test:browser` runs the ten built-artifact Playwright smoke tests. `npm run
+test:browser` runs the twelve built-artifact Playwright smoke tests. `npm run
 check` runs coverage then the browser suite. The current headless
 production modules have 100% line/function coverage; branch coverage is
 reported and should increase as validation/replay cases are added.

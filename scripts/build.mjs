@@ -6,7 +6,12 @@ await rm("dist", { force: true, recursive: true });
 await mkdir("dist", { recursive: true });
 await promisify(execFile)("node_modules/.bin/tsc", []);
 await cp("src/browser/styles.css", "dist/src/browser/styles.css");
+await cp("src/browser/assets", "dist/src/browser/assets", { recursive: true });
 const html = await readFile("index.html", "utf8");
 await writeFile("dist/index.html", html
+  .replace("./src/app.js", "./src/browser/app.js")
+  .replace("./src/styles.css", "./src/browser/styles.css"));
+const mossyard = await readFile("mossyard.html", "utf8");
+await writeFile("dist/mossyard.html", mossyard
   .replace("./src/app.js", "./src/browser/app.js")
   .replace("./src/styles.css", "./src/browser/styles.css"));

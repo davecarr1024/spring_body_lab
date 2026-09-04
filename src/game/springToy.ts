@@ -176,3 +176,38 @@ export function fireBreachCharge(game: any) {
     { kind: "applyImpulse", particleId: "run-wall:p:1:2", impulse: vec2(300, 0) },
   ]);
 }
+
+/** Builds Mossyard Courier, a real-time steering mission with a textured player body. */
+export function createMossyardCourier() {
+  const courier = createGridBody({ id: "courier", rows: 2, columns: 2, origin: vec2(90, 174), spacing: 26, radius: 12, stiffness: 105, damping: 7 });
+  const bramble = createGridBody({ id: "bramble", rows: 2, columns: 2, origin: vec2(250, 70), spacing: 32, radius: 13, stiffness: 90, damping: 6 });
+  if (!courier.ok || !bramble.ok) throw new Error("The built-in Mossyard recipes must be valid.");
+  const definition = createWorldDefinition({
+    gravity: zero, dt: 1 / 60, contact: { tolerance: 1e-6, maxCorrection: 14, restitution: .1, iterations: 3 },
+    particles: [...courier.value.particles, ...bramble.value.particles],
+    springs: [...courier.value.springs, ...bramble.value.springs],
+    fixedSegments: [
+      { id: "floor", start: vec2(30, 270), end: vec2(450, 270) },
+      { id: "left-wall", start: vec2(30, 30), end: vec2(30, 270) },
+      { id: "right-wall", start: vec2(450, 30), end: vec2(450, 270) },
+      { id: "gate-post", start: vec2(415, 155), end: vec2(415, 270) },
+    ],
+  });
+  if (!definition.ok) throw new Error("The built-in Mossyard world must be valid.");
+  const trace = createTrace(definition.value);
+  return Object.freeze({
+    scene: "mossyard-courier",
+    definition: definition.value,
+    state: trace.state,
+    trace,
+    bodies: Object.freeze([courier.value, bramble.value]),
+    playerParticleIds: Object.freeze(courier.value.particles.map((particle) => particle.id)),
+    goal: Object.freeze({ kind: "reach_x", particleId: "courier:p:0:0", minimumX: 365, achieved: false, label: "Steer the moss courier to the moon gate" }),
+  });
+}
+
+/** Applies one directional player input through immutable physics impulses. */
+export function driveMossCourier(game: any, direction: any) {
+  if (game.scene !== "mossyard-courier") return Object.freeze({ game, result: undefined });
+  return advanceGame(game, game.playerParticleIds.map((particleId: string) => Object.freeze({ kind: "applyImpulse", particleId, impulse: vec2(direction.x * 20, direction.y * 20) })));
+}

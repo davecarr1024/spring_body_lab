@@ -33,9 +33,11 @@ evidence.
 
 The eventual experience is a small 2D soft-body game: the player creates,
 grabs, drops, launches, compresses, and breaks soft structures in named scenes.
-Rope, sheet, block, and weak-wall bodies are the intended early toys. A breach
-or construction-sandbox game is a later capstone, not an excuse to introduce
-general engine features now.
+Rope, sheet, block, and weak-wall bodies are the intended early toys.
+Mossyard Courier is the first focused presentation: a standalone live delivery
+scene where keyboard and pointer steering issue only game-owned impulses, and
+a gate goal is derived from physics state. It proves game feel without
+introducing a general engine or progression framework.
 
 The first whole-project playable slice is deliberately tiny: step or kick a
 two-point spring body in a browser scene and inspect its returned state, spring
@@ -180,7 +182,9 @@ The game layer names scenes, recipes, objectives, and player-facing commands.
 It should have a deterministic headless scene state so a game action sequence
 can be replayed without a browser. The browser maps pointer input to game
 commands, advances/display-scrubs recorded results, and renders only facts
-already computed by the game and physics libraries.
+already computed by the game and physics libraries. A renderer-owned skin maps
+a generated body's face IDs to textures and colors; it never changes the body
+recipe or physics state.
 
 The browser inspector exposes particles, springs, faces, forces, contact
 normals, broad-phase cells, constraints, strain, events, energy caveats, and
@@ -221,7 +225,10 @@ builds composition from simple conceptual pieces:
 5. deterministic generated sheets;
 6. multiple bodies and self-collision;
 7. strain, fracture, and a weak wall;
-8. a soft-body game built from these completed pieces.
+8. a soft-body game built from these completed pieces;
+9. a composite Breach Run mission; and
+10. a standalone real-time Mossyard Courier game with direct controls and
+    renderer-owned textured face skins.
 
 A phase is complete only with its headless artifact, public interface tests,
 documentation, and a visible proof. No browser polish or generic abstraction

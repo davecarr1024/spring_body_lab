@@ -97,6 +97,19 @@ goal, and replays identically. The browser test loads the mission, asserts its
 multi-body composition and objective, fires the action, then observes mission
 completion and fracture evidence from the built artifact.
 
+## Phase 10 — Mossyard Courier playable presentation (complete)
+
+**Deliverable:** a standalone real-time soft-body game at `mossyard.html`.
+The player steers a courier with held keyboard input or a clicked course toward
+the moon gate; the scene presents a clear mission and completion feedback.
+
+**Evidence:** the headless game proof repeatedly maps directional input to
+immutable physics impulses and deterministically completes the goal. The
+browser suite proves the standalone entry, live step advance, keyboard and
+mouse interaction, clear feedback, focused controls, and textured face
+rendering. Renderer skins select CC0 texture assets by body ID without changing
+the physics recipe.
+
 ## Deferred proposals
 
 3D, fluid/shader work, rich fracture, continuous collision, alternative

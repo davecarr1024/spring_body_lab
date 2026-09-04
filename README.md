@@ -5,11 +5,11 @@ tested 2D math/geometry library, a headless physics library, then a browser
 game that consumes them. It asks how small explicit rules can create deformable
 worlds that remain fun, inspectable, and explainable.
 
-The current vertical slice is **Breach Run**: an interactable mission with a
-player-fired ram, weak soft-body wall, hanging rope counterweight, and bounded
-arena. Its browser controls issue deterministic game commands; the game
-delegates to physics; physics uses the public math layer and returns the
-springs, contacts, corrections, fracture, and state the browser displays.
+The current vertical slice is **Mossyard Courier**, a standalone real-time
+soft-body delivery game. Steer a textured moss courier to the moon gate with
+WASD/arrow keys or a mouse course; its browser controls issue deterministic
+game commands while physics returns the springs, contacts, corrections,
+fracture, and state the browser displays.
 
 ## Run locally
 
@@ -23,6 +23,7 @@ npm run check
 ```
 
 Open `dist/index.html` after building.
+Open `dist/mossyard.html` for the focused playable demo.
 
 ## What works now
 
@@ -45,6 +46,8 @@ Open `dist/index.html` after building.
 - a named block-and-ram scene whose outcome requires returned particle contact.
 - Breach Run, a composite mission where Fire breach charge physically contacts
   and breaks the goal seam in a multi-body arena.
+- Mossyard Courier, a standalone live keyboard/mouse delivery mission with
+  renderer-owned texture skins for generated soft-body faces.
 
 This is still a compact soft-body game proof, not a general engine. Phases 1–8
 establish the reusable layers; Breach Run proves that those layers can support
@@ -71,6 +74,6 @@ a composite player goal without speculative solver expansion.
 
 ## Next small step
 
-Phases 1–8 are complete; Breach Run is the first scene-led extension. Future
-features begin only from a concrete scene need and a fresh design, rather than
-expanding the solver speculatively.
+Phases 1–9 are complete; Mossyard Courier is the first game-presentation
+extension. Future features begin only from a concrete scene need and a fresh
+design, rather than expanding the solver speculatively.

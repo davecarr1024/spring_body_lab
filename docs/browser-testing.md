@@ -37,6 +37,14 @@ Use role/name locators for controls and accessible text/labels for evidence.
 Use a screenshot or ARIA snapshot only for the stable inspector layout, not as
 the sole proof of physics behavior.
 
+## Mossyard game route
+
+`mossyard.html` is a focused game entry that starts its simulation immediately.
+Its browser proof asserts the mission banner, goal feedback, live step advance,
+visible textured face pattern, keyboard steering through to completion, mouse
+course feedback and advance, simplified game controls, and no page errors.
+The source also verifies the direct route independently from the lab page.
+
 ## Artifacts and responsibilities
 
 On failure, Playwright retains trace and screenshot artifacts in ignored local

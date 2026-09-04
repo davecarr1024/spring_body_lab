@@ -99,6 +99,40 @@ test("Breach Run joins bodies, arena, player action, and objective in one missio
   expect(pageErrors).toEqual([]);
 });
 
+test("Mossyard Courier runs live and gives keyboard, mouse, texture, and goal feedback", async ({ page }) => {
+  const pageErrors = await openToy(page);
+  await page.getByRole("button", { name: "Play Mossyard" }).click();
+  await expect(page.getByRole("img", { name: "Mossyard Courier playable garden" })).toBeVisible();
+  await expect(page.getByTestId("mission-title")).toHaveText("DELIVERY 01 · MOON GATE");
+  await expect(page.getByTestId("control-hint")).toContainText("WASD or arrow keys");
+  await expect(page.locator("button:visible")).toHaveCount(2);
+  await expect(page.getByRole("button", { name: "Pause", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Reset", exact: true })).toBeVisible();
+  await expect(page.locator("polygon.skin-face").first()).toHaveAttribute("fill", /url\(#skin-moss\)/);
+  await expect(page.locator("pattern image").first()).toHaveAttribute("href", /assets\//);
+  await expect.poll(async () => Number(await page.getByTestId("step-value").textContent())).toBeGreaterThan(1);
+  await page.keyboard.down("ArrowRight");
+  await expect(page.getByTestId("input-status")).toHaveText("Keyboard steering active.");
+  await expect(page.getByTestId("goal-status")).toHaveText("Gate reached — delivery complete!", { timeout: 3000 });
+  await page.keyboard.up("ArrowRight");
+  await page.getByRole("button", { name: "Reset" }).click();
+  await page.getByRole("img", { name: "Mossyard Courier playable garden" }).click({ position: { x: 400, y: 100 } });
+  await expect(page.getByTestId("input-status")).toHaveText("Pointer course set — the courier is following it.");
+  await expect.poll(async () => Number(await page.getByTestId("step-value").textContent())).toBeGreaterThan(1);
+  expect(pageErrors).toEqual([]);
+});
+
+test("Mossyard is available as a focused standalone playable demo", async ({ page }) => {
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.goto("/mossyard.html");
+  await expect(page).toHaveTitle("Mossyard Courier");
+  await expect(page.getByRole("img", { name: "Mossyard Courier playable garden" })).toBeVisible();
+  await expect(page.getByTestId("input-status")).toHaveText("Courier awake — steer toward the moon gate.");
+  await expect.poll(async () => Number(await page.getByTestId("step-value").textContent())).toBeGreaterThan(1);
+  expect(pageErrors).toEqual([]);
+});
+
 test("Reset restores the initial multi-body scene", async ({ page }) => {
   const pageErrors = await openToy(page);
   await page.getByRole("button", { name: "Step" }).click();
@@ -112,10 +146,10 @@ test("Reset restores the initial multi-body scene", async ({ page }) => {
 
 test("Play and Pause retain one accessible control set without page errors", async ({ page }) => {
   const pageErrors = await openToy(page);
-  await page.getByRole("button", { name: "Play" }).click();
-  await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
-  await expect(page.getByRole("button")).toHaveCount(15);
-  await page.getByRole("button", { name: "Pause" }).click();
-  await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
+  await page.getByRole("button", { name: "Play", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Pause", exact: true })).toBeVisible();
+  await expect(page.getByRole("button")).toHaveCount(16);
+  await page.getByRole("button", { name: "Pause", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Play", exact: true })).toBeVisible();
   expect(pageErrors).toEqual([]);
 });

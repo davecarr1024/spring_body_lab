@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { vec2 } from "../../src/math/index.js";
-import { advanceGame, createBlockRam, createBreachRun, createMultiBodyLab, createRopeSwing, createSheetLift, createSpringToy, createWeakWallBreach, fireBreachCharge, launchRam, liftSheet, ramWeakWall, shareSceneRecipe, swingRope } from "../../src/game/index.js";
+import { advanceGame, createBlockRam, createBreachRun, createMossyardCourier, createMultiBodyLab, createRopeSwing, createSheetLift, createSpringToy, createWeakWallBreach, driveMossCourier, fireBreachCharge, launchRam, liftSheet, ramWeakWall, shareSceneRecipe, swingRope } from "../../src/game/index.js";
 import { replayTrace } from "../../src/physics/index.js";
 
 test("the game slice consumes a valid physics world and records its command", () => {
@@ -99,4 +99,19 @@ test("Breach Run combines a ram, weak wall, rope, and arena into one goal-driven
   assert.deepEqual(result.result.events.map((event) => event.springId), mission.goal.requiredSpringIds);
   assert.deepEqual(replayTrace(result.game.trace), result.game.trace);
   assert.deepEqual(fireBreachCharge(createBreachRun()), result);
+});
+
+test("Mossyard Courier exposes a deterministic player-controlled soft-body delivery", () => {
+  const mission = createMossyardCourier();
+  assert.equal(mission.scene, "mossyard-courier");
+  assert.equal(mission.bodies.length, 2);
+  assert.equal(mission.playerParticleIds.length, 4);
+  assert.equal(mission.definition.fixedSegments.length, 4);
+  assert.equal(mission.goal.achieved, false);
+  const steerRight = (start: any) => Array.from({ length: 48 }).reduce((current) => driveMossCourier(current.game ?? current, vec2(1, 0)), start);
+  const course = steerRight(mission);
+  assert.equal(course.game.goal.achieved, true);
+  assert.equal(course.game.state.stepIndex, 48);
+  assert.deepEqual(steerRight(createMossyardCourier()), course);
+  assert.equal(driveMossCourier(createBreachRun(), vec2(1, 0)).result, undefined);
 });
