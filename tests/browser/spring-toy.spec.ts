@@ -133,6 +133,20 @@ test("Mossyard is available as a focused standalone playable demo", async ({ pag
   expect(pageErrors).toEqual([]);
 });
 
+test("Trail Driver is a separate keyboard-controlled terrain page without debug particle circles", async ({ page }) => {
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/trail.html");
+  await expect(page).toHaveTitle("Trail Driver");
+  await expect(page.getByRole("img", { name: "Trail Driver heightfield" })).toBeVisible();
+  await expect(page.locator("polygon.skin-face")).toHaveCount(2);
+  await expect(page.locator("circle.particle")).toHaveCount(0);
+  await page.keyboard.down("ArrowRight");
+  await page.waitForTimeout(100);
+  await page.keyboard.up("ArrowRight");
+  expect(errors).toEqual([]);
+});
+
 test("Reset restores the initial multi-body scene", async ({ page }) => {
   const pageErrors = await openToy(page);
   await page.getByRole("button", { name: "Step" }).click();

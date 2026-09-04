@@ -15,3 +15,7 @@ const mossyard = await readFile("mossyard.html", "utf8");
 await writeFile("dist/mossyard.html", mossyard
   .replace("./src/app.js", "./src/browser/app.js")
   .replace("./src/styles.css", "./src/browser/styles.css"));
+const trail = await readFile("trail.html", "utf8");
+await writeFile("dist/trail.html", trail
+  .replace("./src/app.js", "./src/browser/app.js")
+  .replace("./src/styles.css", "./src/browser/styles.css"));
