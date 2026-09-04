@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { vec2 } from "../../src/math/index.js";
-import { advanceGame, createBlockRam, createBreachRun, createMossyardCourier, createMultiBodyLab, createRopeSwing, createSheetLift, createSpringToy, createWeakWallBreach, driveMossCourier, fireBreachCharge, launchRam, liftSheet, ramWeakWall, shareSceneRecipe, swingRope } from "../../src/game/index.js";
+import { advanceGame, createBlockRam, createBreachRun, createMossyardCourier, createMultiBodyLab, createRopeSwing, createSheetLift, createSpringToy, createTrailDriver, createWeakWallBreach, driveMossCourier, driveTrailCar, fireBreachCharge, launchRam, liftSheet, ramWeakWall, shareSceneRecipe, swingRope } from "../../src/game/index.js";
 import { replayTrace } from "../../src/physics/index.js";
 
 test("the game slice consumes a valid physics world and records its command", () => {
@@ -114,4 +114,16 @@ test("Mossyard Courier exposes a deterministic player-controlled soft-body deliv
   assert.equal(course.game.state.stepIndex, 48);
   assert.deepEqual(steerRight(createMossyardCourier()), course);
   assert.equal(driveMossCourier(createBreachRun(), vec2(1, 0)).result, undefined);
+});
+
+test("Trail Driver composes heightfield terrain, a stiff chassis, soft wheels, and axle constraints", () => {
+  const driver = createTrailDriver();
+  assert.equal(driver.terrain.segments.length, 6);
+  assert.equal(driver.definition.constraints.length, 2);
+  assert.equal(driver.bodies.length, 2);
+  const driven = driveTrailCar(driver);
+  assert.equal(driven.result.constraints.length, 2);
+  assert.equal(driven.game.state.stepIndex, 1);
+  assert.deepEqual(driveTrailCar(createTrailDriver()), driven);
+  assert.equal(driveTrailCar(createBreachRun()).result, undefined);
 });

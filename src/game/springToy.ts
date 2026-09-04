@@ -1,5 +1,5 @@
 import { vec2, zero } from "../math/index.js";
-import { appendTraceStep, createGridBody, createRopeBody, createTrace, createWorldDefinition } from "../physics/index.js";
+import { appendTraceStep, createGridBody, createHeightfield, createRopeBody, createTrace, createWorldDefinition } from "../physics/index.js";
 
 export function createSpringToy() {
   const definition = createWorldDefinition({
@@ -210,4 +210,35 @@ export function createMossyardCourier() {
 export function driveMossCourier(game: any, direction: any) {
   if (game.scene !== "mossyard-courier") return Object.freeze({ game, result: undefined });
   return advanceGame(game, game.playerParticleIds.map((particleId: string) => Object.freeze({ kind: "applyImpulse", particleId, impulse: vec2(direction.x * 20, direction.y * 20) })));
+}
+
+/** Builds a stiff chassis with two deliberately deformable wheel bodies on a heightfield. */
+export function createTrailDriver() {
+  const frontWheel = createGridBody({ id: "front-wheel", rows: 2, columns: 2, origin: vec2(170, 208), spacing: 12, radius: 8, stiffness: 38, damping: 5 });
+  const rearWheel = createGridBody({ id: "rear-wheel", rows: 2, columns: 2, origin: vec2(105, 208), spacing: 12, radius: 8, stiffness: 38, damping: 5 });
+  const terrain = createHeightfield({ id: "trail", points: [vec2(0, 270), vec2(80, 250), vec2(170, 260), vec2(250, 220), vec2(340, 245), vec2(450, 210), vec2(600, 230)] });
+  if (!frontWheel.ok || !rearWheel.ok || !terrain.ok) throw new Error("The built-in Trail Driver recipes must be valid.");
+  const chassis = [
+    { id: "chassis:rear", position: vec2(108, 180), velocity: zero, inverseMass: 1, radius: 7 },
+    { id: "chassis:front", position: vec2(183, 180), velocity: zero, inverseMass: 1, radius: 7 },
+    { id: "chassis:roof", position: vec2(148, 145), velocity: zero, inverseMass: 1, radius: 7 },
+  ];
+  const definition = createWorldDefinition({ gravity: vec2(0, 140), dt: 1 / 60, contact: { tolerance: 1e-6, maxCorrection: 12, restitution: 0, friction: .82, iterations: 3 }, particles: [...chassis, ...frontWheel.value.particles, ...rearWheel.value.particles], springs: [
+    { id: "frame:base", a: "chassis:rear", b: "chassis:front", restLength: 75, stiffness: 900, damping: 40 },
+    { id: "frame:left", a: "chassis:rear", b: "chassis:roof", restLength: 53, stiffness: 900, damping: 40 },
+    { id: "frame:right", a: "chassis:front", b: "chassis:roof", restLength: 49.5, stiffness: 900, damping: 40 },
+    ...frontWheel.value.springs, ...rearWheel.value.springs,
+  ], constraints: [
+    { id: "front-axle", a: "chassis:front", b: "front-wheel:p:0:0", restLength: 32, stiffness: .7 },
+    { id: "rear-axle", a: "chassis:rear", b: "rear-wheel:p:0:0", restLength: 32, stiffness: .7 },
+  ], fixedSegments: terrain.value.segments });
+  if (!definition.ok) throw new Error("The built-in Trail Driver world must be valid.");
+  const trace = createTrace(definition.value);
+  return Object.freeze({ scene: "trail-driver", definition: definition.value, state: trace.state, trace, bodies: Object.freeze([frontWheel.value, rearWheel.value]), terrain: terrain.value, goal: Object.freeze({ kind: "reach_x", particleId: "chassis:front", minimumX: 380, achieved: false, label: "Reach the lantern ridge" }) });
+}
+
+/** Drives both soft wheels through public impulse commands. */
+export function driveTrailCar(game: any, direction = 1) {
+  if (game.scene !== "trail-driver") return Object.freeze({ game, result: undefined });
+  return advanceGame(game, game.definition.particles.filter((particle: any) => particle.id.includes("wheel:")).map((particle: any) => Object.freeze({ kind: "applyImpulse", particleId: particle.id, impulse: vec2(direction * 3, 0) })));
 }
